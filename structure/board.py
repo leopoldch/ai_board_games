@@ -35,7 +35,6 @@ class Board:
                 counter-=1
             self.__grid.append(tab)
 
-
     def __str__(self):
         returned_str : str = ""
 
