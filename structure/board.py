@@ -25,7 +25,10 @@ class Board:
 
     def __init__(self, size: int) -> None:
         """initialize the grid"""
-        self.__grid: list = []
+        if size < 2:
+            raise ValueError("La taille de la grille ne peut pas être inférieure à 2")
+
+        self.__grid: list[list] = []
         self.__size: int = size
 
         # variables pour initialiser l'hexagone
@@ -56,8 +59,8 @@ class Board:
                 counter -= 1
             self.__grid.append(tab)
 
-            # on fini par placer les jetons des deux joueurs sur la grille :
-            self.init_items_on_board()
+        # on fini par placer les jetons des deux joueurs sur la grille :
+        self.init_items_on_board()
 
     def __str__(self) -> str:
         """print function"""
@@ -80,7 +83,16 @@ class Board:
 
     def init_items_on_board(self):
         """init items inside the grid"""
-        return
+        value : int = self.__size - self.__grid[0].count(-1)
+        items : list = []
+        
+        # remplir le tableau items avec les éléments à laisser neutres 
+
+        for i in range(self.__size):
+            for j in range(self.__size):
+                # mettre à jour la grid pour bien positionner les items 
+                pass
+
 
     def get_emplacement(self, player: int) -> list[tuple[int, int]]:
         """returns all emplacements of a player"""
@@ -133,4 +145,3 @@ class Board:
 
 test = Board(7)
 print(test)
-print(test.legit_move_for_case((3, 6)))
