@@ -52,6 +52,10 @@ class Board:
                     tab.append(-1)
                 counter-=1
             self.__grid.append(tab)
+            
+            # on fini par placer les jetons des deux joueurs sur la grille :
+            self.init_items_on_board()
+
 
     def __str__(self):
         returned_str : str = ""
@@ -111,11 +115,15 @@ class Board:
                 legits_moves.append(item)
         return legits_moves
 
-    def move_case(self, start : tuple[int,int], dest : tuple[int,int]):
-        pass
+    def move_case(self, start : tuple[int,int], dest : tuple[int,int]) -> None:
+        """Move item if it is possible"""
+        if dest not in self.legit_move_for_case(start):
+            raise ValueError("Impossible de bouger cette case à cet endroit")
+
+        self.__grid[dest[0],dest[1]] == self.__grid[start[0],start[1]]
+        self.__grid[start[0],start[1]] = 0 # on libère la case
 
 
 test = Board(7)
 print(test)
-
 print(test.legit_move_for_case((3,6)))
