@@ -139,6 +139,9 @@ class Board:
         if dest not in self.legit_move_for_case(start):
             raise ValueError("Impossible de bouger cette case à cet endroit")
 
+        if self.__grid[start[0]][start[1]] == -1 or self.__grid[start[0]][start[1]] == 0:
+            raise ValueError("Cannot move this item")
+
         self.__grid[dest[0]][dest[1]] = self.__grid[start[0]][start[1]]
         self.__grid[start[0]][start[1]] = 0  # on libère la case
 
