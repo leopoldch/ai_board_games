@@ -7,8 +7,8 @@ Environment = ... # Ensemble des données utiles (cache, état de jeu...) pour
 Cell = tuple[int, int]
 ActionGopher = Cell
 ActionDodo = tuple[Cell, Cell] # case de départ -> case d'arrivée
-PlayerType = int # 1 ou 2
-State = list[tuple[Cell, PlayerType]] # État du jeu pour la boucle de jeu
+Player = int # 1 ou 2
+State = list[tuple[Cell, Player]] # État du jeu pour la boucle de jeu
 Score = int
 Time = int
 
@@ -143,7 +143,7 @@ class Board:
 
         return neighbors
     
-    def is_legit(self, start: Cell, player : PlayerType) -> bool:
+    def is_legit(self, start: Cell, player : Player) -> bool:
         """returns if move is legit or not"""
 
 
@@ -159,7 +159,6 @@ class Board:
 
         neighbors: list[Cell] = self.get_neighbors(start[0], start[1])
         verif : int = 0
-        print(neighbors)
         
         for item in neighbors:
             if self.__grid[(item[0],item[1])] == player:  # vérification s'il y a un piont du joueur adjascent
@@ -175,7 +174,7 @@ class Board:
             return True
         return False
 
-    def legit_moves(self, player : PlayerType) -> list[Cell]:
+    def legit_moves(self, player : Player) -> list[Cell]:
         """returns legit moves"""
         results : list[Cell] = []
         for item in self.__grid.items():
@@ -183,7 +182,7 @@ class Board:
                 results.append(item[0])
         return results
 
-    def move(self, cell : Cell, player : PlayerType) -> None:
+    def move(self, cell : Cell, player : Player) -> None:
         """function to allow users to place new items on boards following rules"""
         if not self.is_legit(cell, player):
             raise ValueError("Impossible de bouger ce pion à cet endroit")
@@ -193,5 +192,4 @@ class Board:
             # met à jour que le premier coup a été joué 
             if self.__firstmove:
                 self.__firstmove = False
-
 

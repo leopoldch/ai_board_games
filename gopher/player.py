@@ -1,19 +1,20 @@
-from board import * 
+from board import *
+from cache import *
+from typing import Union 
 
 # Types de base utilisés par l'arbitre
-Environment = ... # Ensemble des données utiles (cache, état de jeu...) pour
-                  # que votre IA puisse jouer (objet, dictionnaire, autre...)
+Environment = Cache
 Cell = tuple[int, int]
 ActionGopher = Cell
 ActionDodo = tuple[Cell, Cell] # case de départ -> case d'arrivée
 Action = Union[ActionGopher, ActionDodo]
-PlayerType = int # 1 ou 2
-State = list[tuple[Cell, PlayerType]] # État du jeu pour la boucle de jeu
+Player = int # 1 ou 2
+State = list[tuple[Cell, Player]] # État du jeu pour la boucle de jeu
 Score = int
 Time = int
 
 
-class Player:
+class PlayerClass:
     """classe joueur"""
 
     def __init__(self, id : PlayerType) -> None:
@@ -36,6 +37,6 @@ class Player:
     def strategy(env: Environment, state: State, player: PlayerType,
              time_left: Time) -> tuple[Environment, Action]:
         """strategy how to play"""
-        pass
+        
 
 
