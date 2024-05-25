@@ -1,6 +1,7 @@
 """file to define the structure of the board and its behavior"""
 import math
 import random
+import time
 from typing import Union
 
 Environment = dict
@@ -233,20 +234,95 @@ def move(state:State, cell : Cell, player : Player) -> State:
         grid[cell] = player
     return grid_to_state(grid)
 
+def score(state: State, player: Player) -> float:
+    """returns score"""
+    grid : Grid = state_to_grid(state)
+    if not 1 in grid.values() and not 2 in grid.values():
+            return 1
+    if player == 1:
+        if legit_moves(state,1) == [] and 2 in grid.values() and legit_moves(state,2) != []:
+            return -1
+        else: return 1
+    elif player == 2:
+        if legit_moves(state,2)==[] and 1 in grid.values() and legit_moves(state,1) != []:
+            return -1
+        else:return 1
+
+def final(state):
+    if score(state,1)==1 and score(state,2)==1:
+        return True
+    return False
+
+
+'''
+def minmax(state: State, player: Player) -> float:
+    """basic min max"""
+    player1: Player = 1
+    player2: Player = 2
+    possibilities: list[Action]
+    best: float
+    
+    if score(state):
+        return score(grid, player1)
+
+    if player == 1:  # maximazing player
+        best = float("-inf")
+        possibilities = legals(grid)
+        print("joueur1", possibilities)
+        for item in possibilities:
+            tmp = play(grid, player, item)
+            val = minmax(tmp, player2)
+            if max(best, val) == val:
+                best = val
+        return best
+
+    if player == 2:  # minimizing player
+        best = float("inf")
+        possibilities = legals(grid)
+        print("joueur2", possibilities)
+        for item in possibilities:
+            tmp = play(grid, player, item)
+            val = minmax(tmp, player1)
+            if min(best, val) == val:
+                best = val
+        return best
+
+    raise ValueError("erreur pas de joeur connu")
+'''
+
 
 def strategy(env: Environment, state: State, player: Player,time_left: Time) -> tuple[Environment, Action]:
     legits : list[Cell] = legit_moves(state,player)
-    value = random.randint(len(legits))
-    return ({},legits[value],((0,0),(0,0)))
+    if len(legits)>0:
+        value = random.randint(0,len(legits)-1)
+        return ({},legits[value])
+    else:
+        return ({},[])
 
 
+def test(iter : int, size : int):
+    """test function"""
+    tps1 = time.time()
+    stats1 = 0
+    stats2 = 0
+    for _ in range(iter):
+        current_player = 1
+        state = create_board(size)
+        plays = strategy({},state,current_player,0)[1]
+        while final(state):
+            state = move(state,plays,current_player)
+            if current_player == 1:current_player=2
+            else:current_player=1
+            plays = strategy({},state,current_player,0)[1]
+            print_board(state)
+        if score(state,1)==1:
+            stats1+=1
+        elif score(state,2)==1:
+            stats2+=1
+
+    print(f"temps d'éxécution pour {iter} itérations : {time.time() - tps1:.4f} secondes")
+    print(f"Nombre de parties gagnées pour le joueur 1: {(stats1/iter)*100:.2f}%")
+    print(f"Nombre de parties gagnées pour le joueur 2: {(stats2/iter)*100:.2f}%")
 
 
-
-
-
-
-t = create_board(7)
-t = move(t,(0,0),1)
-t = move(t,(0,1),2)
-print_board(t)
+test(10,7)
