@@ -2,7 +2,7 @@
 import math
 import random
 import time
-from typing import Union
+from typing import Union,Callable
 
 Environment = dict
 Cell = tuple[int, int]
@@ -14,6 +14,9 @@ State = list[tuple[Cell, Player]] # État du jeu pour la boucle de jeu
 Score = int
 Time = int
 Grid = dict[Cell:Player]
+
+
+
 
 # utilitary fonctions to make the code more readable
 
@@ -36,6 +39,7 @@ def grid_to_state(grid:Grid) -> State:
     for item, key in grid.items():
             state.append((item,key))
     return state
+
 
 # ======================= grid template =======================
 # documentation https://www.redblobgames.com/grids/hexagons/#map-storage
@@ -240,11 +244,11 @@ def score(state: State, player: Player) -> float:
     if not 1 in grid.values() and not 2 in grid.values():
             return 1
     if player == 1:
-        if legit_moves(state,1) == [] and 2 in grid.values() and legit_moves(state,2) != []:
+        if legit_moves(state,1) == [] and 2 in grid.values():
             return -1
         else: return 1
     elif player == 2:
-        if legit_moves(state,2)==[] and 1 in grid.values() and legit_moves(state,1) != []:
+        if legit_moves(state,2)==[] and 1 in grid.values():
             return -1
         else:return 1
 
@@ -254,66 +258,71 @@ def final(state):
     return False
 
 
-'''
-def minmax(state: State, player: Player) -> float:
-    """basic min max"""
+def minmax_action(grid: State, player: Player, depth: int = 0) -> tuple[float, Action]:
+    """explore possibilities"""
+
     player1: Player = 1
     player2: Player = 2
-    possibilities: list[Action]
-    best: float
-    
-    if score(state):
-        return score(grid, player1)
+    best: tuple[float, Action]
+    default : tuple= (None,None) # coup pas dans le tableau
+    print("en cours..")
+
+    if depth == 0 or not final(grid):
+        return (score(grid, player1), default)
 
     if player == 1:  # maximazing player
-        best = float("-inf")
-        possibilities = legals(grid)
-        print("joueur1", possibilities)
-        for item in possibilities:
-            tmp = play(grid, player, item)
-            val = minmax(tmp, player2)
-            if max(best, val) == val:
-                best = val
+        best = (float("-inf"), default)
+        for item in legit_moves(grid,player):
+            tmp = move(grid, item, player)
+            returned_values = minmax_action(tmp, player2, depth - 1)
+            if max(best[0], returned_values[0]) == returned_values[0]:
+                best = (returned_values[0], item)
         return best
 
     if player == 2:  # minimizing player
-        best = float("inf")
-        possibilities = legals(grid)
-        print("joueur2", possibilities)
-        for item in possibilities:
-            tmp = play(grid, player, item)
-            val = minmax(tmp, player1)
-            if min(best, val) == val:
-                best = val
+        best = (float("inf"), default)
+        for item in legit_moves(grid,player):
+            tmp = move(grid, item, player)
+            returned_values = minmax_action(tmp, player1, depth - 1)
+            if min(best[0], returned_values[0]) == returned_values[0]:
+                best = (returned_values[0], item)
         return best
-
     raise ValueError("erreur pas de joeur connu")
-'''
 
-
-def strategy(env: Environment, state: State, player: Player,time_left: Time) -> tuple[Environment, Action]:
+def strategy_random(state: State, player: Player) -> Action:
     legits : list[Cell] = legit_moves(state,player)
     if len(legits)>0:
         value = random.randint(0,len(legits)-1)
-        return ({},legits[value])
+        return legits[value]
     else:
-        return ({},[])
 
+        return (None,None)
 
-def test(iter : int, size : int):
+def strategy_minmax(grid: State, player: Player) -> Action:
+    """strategy with min max evaluation"""
+    choice: Action = minmax_action(grid, player,1)[1]
+    print(f"\nChoix du joueur {player} : {choice}")
+    return choice
+
+def strategy(env: Environment, state: State, player: Player,time_left: Time) -> tuple[Environment, Action]:
+    val = strategy_minmax(state, player)
+    return (env,val)
+
+def test(iter : int=1, size : int=7):
     """test function"""
     tps1 = time.time()
     stats1 = 0
     stats2 = 0
     for _ in range(iter):
         current_player = 1
+        env : Environment = {}
         state = create_board(size)
-        plays = strategy({},state,current_player,0)[1]
+        plays = strategy(env,state,current_player,0)[1]
         while final(state):
             state = move(state,plays,current_player)
             if current_player == 1:current_player=2
             else:current_player=1
-            plays = strategy({},state,current_player,0)[1]
+            plays = strategy(env,state,current_player,0)[1]
             print_board(state)
         if score(state,1)==1:
             stats1+=1
@@ -321,8 +330,7 @@ def test(iter : int, size : int):
             stats2+=1
 
     print(f"temps d'éxécution pour {iter} itérations : {time.time() - tps1:.4f} secondes")
-    print(f"Nombre de parties gagnées pour le joueur 1: {(stats1/iter)*100:.2f}%")
-    print(f"Nombre de parties gagnées pour le joueur 2: {(stats2/iter)*100:.2f}%")
+    print(f"Nombre de parties gagnées pour le joueur 1: {stats1} {(stats1/iter)*100:.2f}%")
+    print(f"Nombre de parties gagnées pour le joueur 2: {stats2} {(stats2/iter)*100:.2f}%")
 
-
-test(10,7)
+test(iter=1,size=7)
