@@ -200,12 +200,12 @@ def is_legit(state: State, action: ActionDodo, player: Player) -> bool:
         # si la case future est occupée alors on retourne faux
         if grid[action[1]] != 0:
             return False
-            
         #deplacements possibles a partir d'une case
         if player == 1:
             directions = [(1, 0), (1, 1), (0, 1)]
         elif player == 2:
-        directions = [(-1, 0), (-1, -1), (0, -1)]
+            directions = [(-1, 0), (-1, -1), (0, -1)]
+
         #liste des cases possibles après un deplacement possible
         cellules_possibles = [(action[0][0] + direction[0], action[0][1] + direction[1]) for direction in directions]
         if action[1] in grid and action[1] in cellules_possibles:
@@ -216,7 +216,7 @@ def is_legit(state: State, action: ActionDodo, player: Player) -> bool:
 
 
 def legit_moves(state: State, player: Player) -> list[ActionDodo]:
-    """ Constructs a list of all possible actions from the current state """
+    """ return list of legit moves for a player and a current state of the game """
 
     legit_move: list[ActionDodo] = []
     grid: Grid = state_to_grid(state)
@@ -235,7 +235,6 @@ def legit_moves(state: State, player: Player) -> list[ActionDodo]:
     return legit_move
 
 
-
 def move(state:State, action : ActionDodo, player : Player) -> State:
     """ function to allow users to place new items on boards following rules """
 
@@ -250,29 +249,27 @@ def move(state:State, action : ActionDodo, player : Player) -> State:
     return grid_to_state(grid)
 
 def is_game_over(state: State, player: Player) -> bool:
-    """Checks if the game is over. The game is over if the current player has no legal moves.
-    Returns true if the game is over, false otherwise. """
+    """Checks if the game is over. """
 
     return len(legit_moves(state, player)) == 0
 
 def score(state: State, player: Player) -> float:
-    """     Determines the result of the game.
-    Returns 1 if the current player wins, -1 if the other player wins, 0 for a tie."""
+    """   return a score based on who won at the end. """
 
 
 
     other_player = 3 - player # permet d'avoir l'autre joueur
     if is_game_over(state, player):
-        return 1  # Current player wins
+        return 1  # le joueur actuelle a gané
 
     elif is_game_over(state, other_player):
-        return - 1 # other player win
+        return - 1 # l autre joueur a gagné
     else:
-        return 0  # Game is not over, no result yet
+        return 0  # pas terminé
 
 
 def final(state: State) -> bool:
-    """Check if the game is over"""
+    """Check if it's a final state"""
     return is_game_over(state,1) or is_game_over(state,2)
 
 
@@ -338,10 +335,11 @@ def test(iter : int, size : int):
             state = move(state, plays, current_player)
             if current_player == 1:current_player=2
             else:current_player=1
-            print("le current player est", current_player)
+            #print("le current player est", current_player)
             plays = strategy({},state,current_player,0)[1]
-            print("voici le coup joué", plays)
-            print_board(state)
+            #print("voici le coup qui sera joué", plays)
+            #print_board(state)
+        print("voici le score des rouges",score(state,1),"et voici le score des bleus", score(state,2))
         if score(state,1)==1:
             stats1+=1
         elif score(state,2)==1:
@@ -352,7 +350,7 @@ def test(iter : int, size : int):
     print(f"Nombre de parties gagnées pour le joueur 2: {(stats2/iter)*100:.2f}%")
 
 
-test(10,7)
+test(50,10)
 #board7 = create_board(7)
 #board7 = init_board(board7)
 #print(board7)
