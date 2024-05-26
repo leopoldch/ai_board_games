@@ -200,8 +200,12 @@ def is_legit(state: State, action: ActionDodo, player: Player) -> bool:
         # si la case future est occupée alors on retourne faux
         if grid[action[1]] != 0:
             return False
+            
         #deplacements possibles a partir d'une case
-        directions = [(1, 0), (1, 1), (0, 1)]
+        if player == 1:
+            directions = [(1, 0), (1, 1), (0, 1)]
+        elif player == 2:
+        directions = [(-1, 0), (-1, -1), (0, -1)]
         #liste des cases possibles après un deplacement possible
         cellules_possibles = [(action[0][0] + direction[0], action[0][1] + direction[1]) for direction in directions]
         if action[1] in grid and action[1] in cellules_possibles:
