@@ -141,10 +141,9 @@ class Gopher_Game:
 
     def is_legit(self, start: Cell) -> bool:
         """returns if move is legit or not"""  
-        if self.grid[start] != 0:
-            return False
-        if self.firstmove:
-            return True
+        if self.firstmove:return True
+        if start == None:return False
+        if self.grid[start] != 0:return False
         neighbors: list[Cell] = self.get_neighbors(start[0], start[1])
         verif: int = 0
         for item in neighbors:
@@ -185,19 +184,33 @@ class Gopher_Game:
             return 1
         else:
             return -1
+        
+    def score_j1(self) -> float:
+        """evaluation func"""
+        v : bool = False
+        if self.current_player ==2:self.set_player(1);v=True
+        if self.firstmove:
+            if v:self.set_player(1)
+            return 1
+        if self.legit_moves():
+            if v:self.set_player(1)
+            return 1
+        else:
+            if v:self.set_player(1)
+            return -1
 
     def final(self) -> bool:
         """returns if game has ended"""
         if self.legit_moves():
             return True
         return False
-    @memoize
+    
+    #@memoize
     def minmax_action(self, depth: int = 0) -> tuple[float, Action]:
         """minmax function"""
         best: tuple[float, Action] = (None, None)
         if depth == 0 or not self.legit_moves():
-            return (self.score(), None)
-        
+            return (self.score_j1(), None)
         original_grid = self.grid.copy()  # Faire une copie de la grille initiale
 
         if self.current_player == 1:
@@ -239,7 +252,7 @@ class Gopher_Game:
         """Algorithme alpha-beta"""
         best: tuple[float, Action] = (None, None)
         if depth == 0 or not self.legit_moves():
-            return (self.score(), None)
+            return (self.score_j1(), None)
 
         original_grid = self.grid.copy()  # Faire une copie de la grille initiale
 
@@ -294,12 +307,17 @@ class Gopher_Game:
         return grid_to_state(self.grid)
 
 
-def test(iter:int,size:int) ->None:
+def test(iter:int,size:int, depth : int) ->None:
     score : int =0
     tps1 = time.time()
-    for _ in range(iter):
+    for i in range(iter):
+        clear()
+        if iter >1:
+            print(f'Avancement : ',end=" ")
+            compteur : int = math.ceil((i/iter)*100)
+            print('['+compteur*'-'+((100-compteur)*' '+']'))
         game = Gopher_Game(size=size,starting_player=1)
-        game.profondeur = 100
+        game.profondeur = depth
         while game.final():
             if game.current_player==1:
                 play : Action = game.strategy_minmax()
@@ -312,19 +330,56 @@ def test(iter:int,size:int) ->None:
         # on compte le nombre de parties gagnées par le joueur 1
         if game.current_player == 1:
             if game.score() == 1:score+=1
+            #else:print(game);print(game.grid)
         else:
             if game.score() == -1:score+=1
-    print(game)
-    del game
+            #else:print(game);print(game.grid)
+        print(game)
+        del game
 
+    temps : float = time.time() - tps1
+    print()
     print(
-        f"Temps d'éxécution pour {iter} itérations : {time.time() - tps1:.4f} secondes"
+            f"Nombre d'itérations : {iter} | Taille de la grille : {size} | pronfondeur minmax : {depth}"
+        )
+    print(
+        f"Temps d'éxécution  : {temps:.4f} secondes"
     )
     print(
-        f"Nombre de parties gagnées pour le joueur 1: {iter-score} {((iter-score)/iter)*100:.2f}%"
+        f"Temps par partie  : {temps/100:.4f} secondes"
     )
     print(
-        f"Nombre de parties gagnées pour le joueur 2: {score} {(score/iter)*100:.2f}%"
+        f"Nombre de parties gagnées pour le joueur 1: {score} {(score/iter)*100:.2f}%"
+    )
+    print(
+        f"Nombre de parties gagnées pour le joueur 2: {iter-score} {((iter-score)/iter)*100:.2f}%"
     )
     
-test(1000,3)
+
+def debug() -> None:
+
+    game = Gopher_Game(7,1)
+
+    test = {(0, 6): 0, (1, 6): 0, (2, 6): 1, (3, 6): 0, (4, 6): 2, (5, 6): 0, (6, 6): 1, (-1, 5): 2, (0, 5): 1, (1, 5): 0, (2, 5): 2, (3, 5): 0, (4, 5): 1, (5, 5): 0, (6, 5): 2, (-2, 4): 1, (-1, 4): 0, (0, 4): 2, (1, 4): 0, (2, 4): 1, (3, 4): 0, (4, 4): 2, (5, 4): 1, (6, 4): 0, (-3, 3): 0, (-2, 3): 2, (-1, 3): 0, (0, 3): 1, (1, 3): 0, (2, 3): 2, (3, 3): 1, (4, 3): 0, (5, 3): 0, (6, 3): 1, (-4, 2): 0, (-3, 2): 1, (-2, 2): 0, (-1, 2): 0, (0, 2): 2, (1, 2): 1, (2, 2): 0, (3, 2): 2, (4, 2): 1, (5, 2): 2, (6, 2): 0, (-5, 1): 1, (-4, 1): 0, (-3, 1): 2, (-2, 1): 1, (-1, 1): 0, (0, 1): 0, (1, 1): 2, (2, 1): 0, (3, 1): 0, (4, 1): 0, (5, 1): 1, (6, 1): 2, (-6, 0): 0, (-5, 0): 2, (-4, 0): 1, (-3, 0): 0, (-2, 0): 0, (-1, 0): 2, (0, 0): 1, (1, 0): 0, (2, 0): 0, (3, 0): 1, (4, 0): 2, (5, 0): 0, (6, 0): 1, (-6, -1): 1, (-5, -1): 0, (-4, -1): 2, (-3, -1): 1, (-2, -1): 0, (-1, -1): 0, (0, -1): 2, (1, -1): 0, (2, -1): 2, (3, -1): 0, (4, -1): 0, (5, -1): 2, (-6, -2): 2, (-5, -2): 0, (-4, -2): 0, (-3, -2): 2, (-2, -2): 0, (-1, -2): 1, (0, -2): 0, (1, -2): 1, (2, -2): 0, (3, -2): 0, (4, -2): 1, (-6, -3): 1, (-5, -3): 0, (-4, -3): 1, (-3, -3): 0, (-2, -3): 0, (-1, -3): 2, (0, -3): 0, (1, -3): 0, (2, -3): 1, (3, -3): 2, (-6, -4): 2, (-5, -4): 0, (-4, -4): 2, (-3, -4): 1, (-2, -4): 0, (-1, -4): 1, (0, -4): 0, (1, -4): 2, (2, -4): 0, (-6, -5): 1, (-5, -5): 0, (-4, -5): 0, (-3, -5): 2, (-2, -5): 0, (-1, -5): 2, (0, -5): 0, (1, -5): 1, (-6, -6): 2, (-5, -6): 1, (-4, -6): 0, (-3, -6): 0, (-2, -6): 0, (-1, -6): 0, (0, -6): 2}
+    game.grid = test
+    game.firstmove = False
+
+    # symétries 
+    '''
+    game.grid = invert_grid_h(game.grid)
+    print(game)
+    game.grid = invert_grid_v(game.grid)
+    print(game)
+    game.grid = invert_grid_h(game.grid)
+    print(game)
+    game.grid = invert_grid_v(game.grid)
+    print(game)
+    '''
+
+    # rotations
+
+    rotate_grid(game.grid)
+
+#debug()
+
+test(100,3,10000)
