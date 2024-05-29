@@ -157,12 +157,12 @@ class Gopher_Game:
         if self.firstmove:
             return 1
         if player == 1:
-            if self.legit_moves(1) == [] and not self.firstmove:
+            if self.legit_moves(1) == []:
                 return -1
             else:
                 return 1
         elif player == 2:
-            if self.legit_moves(2) == [] and not self.firstmove:
+            if self.legit_moves(2) == []:
                 return -1
             else:
                 return 1
@@ -171,6 +171,7 @@ class Gopher_Game:
         """returns if game has ended"""
         if self.score(1) == 1 and self.score(2) == 1:
             return True
+            
         return False
     
     def minmax_action(self, player: Player, depth: int = 0) -> tuple[float, Action]:
@@ -207,6 +208,13 @@ class Gopher_Game:
         value = random.randint(0,len(legits)-1)
         return ({}, legits[value])
 
+    def update_grid_from_state(self, state : State) -> None:
+        self.grid = state_to_grid(state)
+
+    def get_state_from_grid(self) -> State:
+        return grid_to_state(self.grid)
+
+
 def test():
     game = Gopher_Game(7)
     cur_player : Player = 1
@@ -216,6 +224,7 @@ def test():
         if cur_player ==1:cur_player=2
         else:cur_player=1
         print(game)
+        print(game.final())
+    print(game.final())
         
-
 test()
