@@ -34,13 +34,26 @@ def grid_to_state(grid: Grid) -> State:
         state.append((item, key))
     return state
 
-def memoize(f: Callable[[dict, int, int], tuple[float, Action]]) -> Callable[[dict, int, int], tuple[float, Action]]:
-    cache = {} 
-    def g(grid: dict, player: int, depth: int) -> tuple[float, Action]:
-        key = (tuple(sorted(grid.items())), player, depth)
+def memoize(func):
+    cache = {}
+    def memoized_func(self, depth=3):
+        key = tuple(self.grid)
         if key in cache:
             return cache[key]
-        val = f(grid, player, depth)
-        cache[key] = val
-        return val
-    return g
+        result = func(self, depth)
+        cache[key] = result
+        return result
+    return memoized_func
+
+
+def memoizeab(func):
+    cache = {}
+    def memoized_funcab(self, depth=3, alpha=float("-inf"), beta=float("inf")):
+        key = tuple(self.grid,alpha, beta)
+        if key in cache:
+            return cache[key]
+        result = func(self, depth, alpha, beta)
+        cache[key] = result
+        return result
+
+    return memoized_funcab

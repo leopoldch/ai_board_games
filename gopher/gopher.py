@@ -300,11 +300,10 @@ def test(iter:int,size:int) ->None:
     tps1 = time.time()
     for _ in range(iter):
         game = Gopher_Game(size=size,starting_player=1)
-        game.profondeur = 4
+        game.profondeur = 6
         while game.final():
-            print('en cours...')
             if game.current_player==1:
-                play : Action = game.strategy_alpha_beta()
+                play : Action = game.strategy_minmax()
                 game.move(play)
                 game.set_player(player=2)
             else:
@@ -329,4 +328,4 @@ def test(iter:int,size:int) ->None:
         f"Nombre de parties gagnées pour le joueur 2: {iter-score} {((iter-score)/iter)*100:.2f}%"
     )
     
-test(100,7)
+test(1,7)
