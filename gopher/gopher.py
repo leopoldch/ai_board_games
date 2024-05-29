@@ -2,10 +2,21 @@
 import math
 import random
 import time
+import copy
 from utils import *
 
 class Gopher_Game:
     """classe du jeu gopher"""
+
+    # Pour améliorer encore le temps d'éxécution il est possible de stocker 
+    # les coups légaux avec un attribut de la classe qu'on met à jour à chaque 
+    # changement de la grille
+    # idée : parcourir toute la grille et dès qu'une valeur est différente alors
+    # on regarde parmis ses voisins si d'autres coups sont légaux 
+    # de cette manière c'est moins couteux que de reparcourir toute la grille
+    # à chaque fois qu'on veut connaitre les coups légaux
+    # fonction check_grid() qu'on peut appeller à des moments clés 
+
 
     def __init__(self,size:int, starting_player : Player) -> None:
         self.size = size
@@ -94,6 +105,15 @@ class Gopher_Game:
                 start = [start[0], start[1] - 1]
         return returned_str
 
+    def copy(self):
+            """Retourne une copie de l'objet Gopher_Game"""
+            new_game = copy.deepcopy(self)
+            new_game.grid = self.grid.copy()
+            new_game.set_player(self.current_player) 
+            new_game.firstmove = self.firstmove
+            new_game.size = self.size
+            return new_game
+
     def get_neighbors(self,x: int, y: int) -> list[Cell]:
         """gets neighbors of a cell from no data"""
         """High time complexity care  ! """
@@ -162,49 +182,110 @@ class Gopher_Game:
         """evaluation func"""
         if self.firstmove:
             return 1
-        if self.legit_moves() == []:
-            return -1
-        else:
+        if self.legit_moves():
             return 1
+        else:
+            return -1
 
     def final(self) -> bool:
         """returns if game has ended"""
-        if self.score() == -1:
-            return False
-        return True
+        if self.legit_moves():
+            return True
+        return False
     
-    def minmax_action(self, player: Player, depth: int = 0) -> tuple[float, Action]:
+    def minmax_action(self, depth: int = 0) -> tuple[float, Action]:
         """minmax function"""
-        player1: Player = 1
-        player2: Player = 2
         best: tuple[float, Action] = (None, None)
-        if depth == 0 or not self.final():
-            return (self.score(player1), best)
+        if depth == 0 or not self.legit_moves():
+            return (self.score(), None)
         
-        if player == 1:
-            best = (float("-inf"), best)
-            for item in self.legit_moves(player):
-                tmp = self.move(item, player)
-                returned_values = self.minmax_action(tmp, player2, depth - 1)
-                if max(best[0], returned_values[0]) == returned_values[0]:
-                    best = (returned_values[0], item)
-            return best
-        
-        if player == 2:
-            best = (float("inf"), best)
-            for item in self.legit_moves(player):
-                tmp = self.move(item, player)
-                returned_values = self.minmax_action(tmp, player1, depth - 1)
-                if min(best[0], returned_values[0]) == returned_values[0]:
-                    best = (returned_values[0], item)
-            return best
-        raise ValueError("erreur pas de joeur connu")
+        original_grid = self.grid.copy()  # Faire une copie de la grille initiale
 
-    def strategy_random(self) -> tuple[Environment, Action]:
+        if self.current_player == 1:
+            best_value = float("-inf")
+            for move in self.legit_moves():
+                self.move(move)
+                self.set_player(2)
+                score, _ = self.minmax_action(depth - 1)
+                if score > best_value:
+                    best_value = score
+                    best = (score, move)
+                self.grid = original_grid.copy()  # Restaurer la grille initiale
+                self.set_player(1)
+            return best
+
+        if self.current_player == 2:
+            best_value = float("inf")
+            for move in self.legit_moves():
+                self.move(move)
+                self.set_player(1)
+                score, _ = self.minmax_action(depth - 1)
+                if score < best_value:
+                    best_value = score
+                    best = (score, move)
+                self.grid = original_grid.copy()  # Restaurer la grille initiale
+                self.set_player(2)
+            return best
+
+        raise ValueError("Joueur inconnu")
+
+    def strategy_minmax(self) -> Action:
+        """strategy de jeu avec minmax"""
+        if self.firstmove:return (0,0)
+        value : Action = self.minmax_action(3)[1]
+        return value
+
+    def alpha_beta_action(self, depth: int = 0, alpha: float = float("-inf"), beta: float = float("inf")) -> tuple[float, Action]:
+        """Algorithme alpha-beta"""
+        best: tuple[float, Action] = (None, None)
+        if depth == 0 or not self.legit_moves():
+            return (self.score(), None)
+
+        original_grid = self.grid.copy()  # Faire une copie de la grille initiale
+
+        if self.current_player == 1:
+            best_value = float("-inf")
+            for move in self.legit_moves():
+                self.move(move)
+                self.set_player(2)
+                score, _ = self.alpha_beta_action(depth - 1, best_value, beta)
+                if score > best_value:
+                    best_value = score
+                    best = (score, move)
+                self.grid = original_grid.copy()  # Restaurer la grille initiale
+                self.set_player(1)
+                if best_value >= beta:
+                    break  # Coupure bêta
+            return best
+
+        if self.current_player == 2:
+            best_value = float("inf")
+            for move in self.legit_moves():
+                self.move(move)
+                self.set_player(1)
+                score, _ = self.alpha_beta_action(depth - 1, alpha, best_value)
+                if score < best_value:
+                    best_value = score
+                    best = (score, move)
+                self.grid = original_grid.copy()  # Restaurer la grille initiale
+                self.set_player(2)
+                if best_value <= alpha:
+                    break  # Coupure alpha
+            return best
+
+        raise ValueError("Joueur inconnu")
+
+    def strategy_alpha_beta(self) -> Action:
+        """strategy de jeu avec minmax"""
+        if self.firstmove:return (0,0)
+        value : Action = self.alpha_beta_action(3)[1]
+        return value
+
+    def strategy_random(self) -> Action:
         """function to play with a random strat"""
         legits: list[Cell] = self.legit_moves()
         value = random.randint(0,len(legits)-1)
-        return ({}, legits[value])
+        return legits[value]
 
     def update_grid_from_state(self, state : State) -> None:
         self.grid = state_to_grid(state)
@@ -219,7 +300,7 @@ def test(iter:int,size:int) ->None:
     for _ in range(iter):
         game = Gopher_Game(size=size,starting_player=1)
         while game.final():
-            play : Action = game.strategy_random()[1]
+            play : Action = game.strategy_alpha_beta()
             game.move(play)
             if game.current_player==1:game.set_player(player=2)
             else:game.set_player(player=1)
@@ -231,8 +312,8 @@ def test(iter:int,size:int) ->None:
             if game.score() == 1:score+=1
         else:
             if game.score() == -1:score+=1
-        del game
-        
+    print(game)
+    del game
     print(
         f"Temps d'éxécution pour {iter} itérations : {time.time() - tps1:.4f} secondes"
     )
@@ -243,4 +324,4 @@ def test(iter:int,size:int) ->None:
         f"Nombre de parties gagnées pour le joueur 2: {iter-score} {((iter-score)/iter)*100:.2f}%"
     )
     
-test(100,7)
+test(1,7)

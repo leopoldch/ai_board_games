@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union,Callable
 
 Environment = dict
 Cell = tuple[int, int]
@@ -33,3 +33,14 @@ def grid_to_state(grid: Grid) -> State:
     for item, key in grid.items():
         state.append((item, key))
     return state
+
+def memoize(f: Callable[[dict, int, int], tuple[float, Action]]) -> Callable[[dict, int, int], tuple[float, Action]]:
+    cache = {} 
+    def g(grid: dict, player: int, depth: int) -> tuple[float, Action]:
+        key = (tuple(sorted(grid.items())), player, depth)
+        if key in cache:
+            return cache[key]
+        val = f(grid, player, depth)
+        cache[key] = val
+        return val
+    return g
