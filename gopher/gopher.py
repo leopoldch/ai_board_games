@@ -170,8 +170,7 @@ class Gopher_Game:
         if not self.updated:
             if self.firstmove:self.legits = list(self.grid.keys())
             for item in self.grid.items():
-                if item[1] == 0 and self.is_legit(item[0]):
-                    self.legits.append(item[0])
+                if item[1] == 0 and self.is_legit(item[0]):self.legits.append(item[0])
             self.updated = True
 
     def move(self, cell: Cell) -> None:
@@ -397,9 +396,8 @@ def debug() -> None:
     '''
 
     # rotations
-
     #rotate_grid(game.grid)
 
 #debug()
 
-test(10,7,4)
+test(10,7,5)
