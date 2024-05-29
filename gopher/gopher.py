@@ -33,8 +33,6 @@ class Gopher_Game:
     def create_board(self) -> None:
         """create board using a size"""
         sizet = self.size * 2 - 1
-        if sizet < 6:
-            raise ValueError("La grille ne peut pas être inférieure à 6")
         
         self.grid: dict[Cell:Player] = {}
         counter: int = math.ceil(sizet / 2)
@@ -193,7 +191,7 @@ class Gopher_Game:
         if self.legit_moves():
             return True
         return False
-    
+    @memoize
     def minmax_action(self, depth: int = 0) -> tuple[float, Action]:
         """minmax function"""
         best: tuple[float, Action] = (None, None)
@@ -236,6 +234,7 @@ class Gopher_Game:
         value : Action = self.minmax_action(self.profondeur)[1]
         return value
 
+    #@memoizeab
     def alpha_beta_action(self, depth: int = 0, alpha: float = float("-inf"), beta: float = float("inf")) -> tuple[float, Action]:
         """Algorithme alpha-beta"""
         best: tuple[float, Action] = (None, None)
@@ -300,7 +299,7 @@ def test(iter:int,size:int) ->None:
     tps1 = time.time()
     for _ in range(iter):
         game = Gopher_Game(size=size,starting_player=1)
-        game.profondeur = 6
+        game.profondeur = 100
         while game.final():
             if game.current_player==1:
                 play : Action = game.strategy_minmax()
@@ -310,22 +309,22 @@ def test(iter:int,size:int) ->None:
                 play : Action = game.strategy_random()
                 game.move(play)
                 game.set_player(player=1)
-
         # on compte le nombre de parties gagnées par le joueur 1
         if game.current_player == 1:
             if game.score() == 1:score+=1
         else:
             if game.score() == -1:score+=1
+    print(game)
     del game
 
     print(
         f"Temps d'éxécution pour {iter} itérations : {time.time() - tps1:.4f} secondes"
     )
     print(
-        f"Nombre de parties gagnées pour le joueur 1: {score} {(score/iter)*100:.2f}%"
+        f"Nombre de parties gagnées pour le joueur 1: {iter-score} {((iter-score)/iter)*100:.2f}%"
     )
     print(
-        f"Nombre de parties gagnées pour le joueur 2: {iter-score} {((iter-score)/iter)*100:.2f}%"
+        f"Nombre de parties gagnées pour le joueur 2: {score} {(score/iter)*100:.2f}%"
     )
     
-test(1,7)
+test(1000,3)

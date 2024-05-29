@@ -37,7 +37,7 @@ def grid_to_state(grid: Grid) -> State:
 def memoize(func):
     cache = {}
     def memoized_func(self, depth=3):
-        key = tuple(self.grid)
+        key = tuple((pos, val) for pos, val in self.grid.items())
         if key in cache:
             return cache[key]
         result = func(self, depth)
@@ -49,7 +49,8 @@ def memoize(func):
 def memoizeab(func):
     cache = {}
     def memoized_funcab(self, depth=3, alpha=float("-inf"), beta=float("inf")):
-        key = tuple(self.grid,alpha, beta)
+        tmp = tuple((pos, val) for pos, val in self.grid.items())
+        key = tuple(tmp,alpha, beta)
         if key in cache:
             return cache[key]
         result = func(self, depth, alpha, beta)
