@@ -20,6 +20,7 @@ class Gopher_Game:
 
     def __init__(self,size:int, starting_player : Player) -> None:
         self.size = size
+        self.profondeur = 3
         self.firstmove = True
         self.current_player = starting_player
         self.grid : Grid
@@ -232,7 +233,7 @@ class Gopher_Game:
     def strategy_minmax(self) -> Action:
         """strategy de jeu avec minmax"""
         if self.firstmove:return (0,0)
-        value : Action = self.minmax_action(3)[1]
+        value : Action = self.minmax_action(self.profondeur)[1]
         return value
 
     def alpha_beta_action(self, depth: int = 0, alpha: float = float("-inf"), beta: float = float("inf")) -> tuple[float, Action]:
@@ -278,7 +279,7 @@ class Gopher_Game:
     def strategy_alpha_beta(self) -> Action:
         """strategy de jeu avec minmax"""
         if self.firstmove:return (0,0)
-        value : Action = self.alpha_beta_action(3)[1]
+        value : Action = self.alpha_beta_action(self.profondeur)[1]
         return value
 
     def strategy_random(self) -> Action:
@@ -299,21 +300,25 @@ def test(iter:int,size:int) ->None:
     tps1 = time.time()
     for _ in range(iter):
         game = Gopher_Game(size=size,starting_player=1)
+        game.profondeur = 4
         while game.final():
-            play : Action = game.strategy_alpha_beta()
-            game.move(play)
-            if game.current_player==1:game.set_player(player=2)
-            else:game.set_player(player=1)
+            print('en cours...')
+            if game.current_player==1:
+                play : Action = game.strategy_alpha_beta()
+                game.move(play)
+                game.set_player(player=2)
+            else:
+                play : Action = game.strategy_random()
+                game.move(play)
+                game.set_player(player=1)
 
-        #print(game)
         # on compte le nombre de parties gagnées par le joueur 1
-
         if game.current_player == 1:
             if game.score() == 1:score+=1
         else:
             if game.score() == -1:score+=1
-    print(game)
     del game
+
     print(
         f"Temps d'éxécution pour {iter} itérations : {time.time() - tps1:.4f} secondes"
     )
@@ -324,4 +329,4 @@ def test(iter:int,size:int) ->None:
         f"Nombre de parties gagnées pour le joueur 2: {iter-score} {((iter-score)/iter)*100:.2f}%"
     )
     
-test(1,7)
+test(100,7)
