@@ -46,6 +46,7 @@ def grid_to_state(grid: Grid) -> State:
 
 def memoize(func):
     cache = {}
+    print('yes')
     def memoized_func(self, depth=3):
         key = tuple((pos, val) for pos, val in self.grid.items())
         if key in cache and self.is_legit(cache[key][1]):

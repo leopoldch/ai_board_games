@@ -205,7 +205,7 @@ class Gopher_Game:
             return True
         return False
     
-    #@memoize
+    @memoize
     def minmax_action(self, depth: int = 0) -> tuple[float, Action]:
         """minmax function"""
         best: tuple[float, Action] = (None, None)
@@ -311,8 +311,8 @@ def test(iter:int,size:int, depth : int) ->None:
     score : int =0
     tps1 = time.time()
     for i in range(iter):
-        clear()
         if iter >1:
+            clear()
             print(f'Avancement : ',end=" ")
             compteur : int = math.ceil((i/iter)*100)
             print('['+compteur*'-'+((100-compteur)*' '+']'))
@@ -345,9 +345,10 @@ def test(iter:int,size:int, depth : int) ->None:
     print(
         f"Temps d'éxécution  : {temps:.4f} secondes"
     )
-    print(
-        f"Temps par partie  : {temps/100:.4f} secondes"
-    )
+    if iter >1 :
+        print(
+            f"Temps par partie  : {temps/iter:.4f} secondes"
+        )
     print(
         f"Nombre de parties gagnées pour le joueur 1: {score} {(score/iter)*100:.2f}%"
     )
@@ -382,4 +383,4 @@ def debug() -> None:
 
 #debug()
 
-test(100,3,10000)
+test(10,10,3)
