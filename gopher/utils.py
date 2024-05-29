@@ -46,7 +46,6 @@ def grid_to_state(grid: Grid) -> State:
 
 def memoize(func):
     cache = {}
-    print('yes')
     def memoized_func(self, depth=3):
         key = tuple((pos, val) for pos, val in self.grid.items())
         if key in cache and self.is_legit(cache[key][1]):
@@ -109,22 +108,6 @@ def memoize(func):
         return result
     return memoized_func
 
-
-def memoizeab(func):
-    cache = {}
-    def memoized_funcab(self, depth=3, alpha=float("-inf"), beta=float("inf")):
-        tmp = tuple((pos, val) for pos, val in self.grid.items())
-        key = tuple(tmp,alpha, beta)
-        if key in cache:
-            return cache[key]
-        result = func(self, depth, alpha, beta)
-        cache[key] = result
-        return result
-
-    return memoized_funcab
-
-
-
 def invert_coord_h(cell : Cell) -> Cell:
     return (-cell[0],-cell[1])
 
@@ -144,8 +127,6 @@ def invert_grid_v(grid : Grid) -> Grid:
     for tup in grid:
         new_grid[invert_coord_v(tup)] = grid[tup]
     return new_grid
-
-
 
 def rang(x,y) -> int:
     value : int = 0

@@ -17,6 +17,9 @@ class Gopher_Game:
     # à chaque fois qu'on veut connaitre les coups légaux
     # fonction check_grid() qu'on peut appeller à des moments clés 
 
+    def verif(self) -> None:
+        if not self.updated:
+            self.legit_moves()
 
     def __init__(self,size:int, starting_player : Player) -> None:
         self.size = size
@@ -25,6 +28,8 @@ class Gopher_Game:
         self.current_player = starting_player
         self.grid : Grid
         self.create_board()
+        self.updated = False
+        self.legits : list[Cell] = []
     
     def set_player(self,player:Player):
         if player not in [1,2]:raise ValueError("Le joueur doit être soit 1 soit 2")
@@ -143,7 +148,8 @@ class Gopher_Game:
         """returns if move is legit or not"""  
         if self.firstmove:return True
         if start == None:return False
-        if self.grid[start] != 0:return False
+        if self.grid[start]!=0:return False
+
         neighbors: list[Cell] = self.get_neighbors(start[0], start[1])
         verif: int = 0
         for item in neighbors:
@@ -159,14 +165,14 @@ class Gopher_Game:
             return True
         return False
 
-    def legit_moves(self) -> list[Cell]:
+    def legit_moves(self) ->None:
         """returns legit moves in game"""
-        results: list[Cell] = []
-        if self.firstmove:return list(self.grid.keys())
-        for item in self.grid.items():
-            if item[1] == 0 and self.is_legit(item[0]):
-                results.append(item[0])
-        return results
+        if not self.updated:
+            if self.firstmove:self.legits = list(self.grid.keys())
+            for item in self.grid.items():
+                if item[1] == 0 and self.is_legit(item[0]):
+                    self.legits.append(item[0])
+            self.updated = True
 
     def move(self, cell: Cell) -> None:
         """play item on grid"""
@@ -175,12 +181,15 @@ class Gopher_Game:
         else:
             if self.firstmove:self.firstmove = False
             self.grid[cell] = self.current_player
-    
+            self.updated = False
+            self.legits = []
+
     def score(self) -> float:
         """evaluation func"""
+        self.verif()
         if self.firstmove:
             return 1
-        if self.legit_moves():
+        if self.legits:
             return 1
         else:
             return -1
@@ -192,7 +201,7 @@ class Gopher_Game:
         if self.firstmove:
             if v:self.set_player(1)
             return 1
-        if self.legit_moves():
+        if self.legits:
             if v:self.set_player(1)
             return 1
         else:
@@ -201,7 +210,8 @@ class Gopher_Game:
 
     def final(self) -> bool:
         """returns if game has ended"""
-        if self.legit_moves():
+        self.verif()
+        if self.legits:
             return True
         return False
     
@@ -209,13 +219,14 @@ class Gopher_Game:
     def minmax_action(self, depth: int = 0) -> tuple[float, Action]:
         """minmax function"""
         best: tuple[float, Action] = (None, None)
-        if depth == 0 or not self.legit_moves():
+        self.verif()
+        if depth == 0 or not self.legits:
             return (self.score_j1(), None)
         original_grid = self.grid.copy()  # Faire une copie de la grille initiale
 
         if self.current_player == 1:
             best_value = float("-inf")
-            for move in self.legit_moves():
+            for move in self.legits:
                 self.move(move)
                 self.set_player(2)
                 score, _ = self.minmax_action(depth - 1)
@@ -228,7 +239,7 @@ class Gopher_Game:
 
         if self.current_player == 2:
             best_value = float("inf")
-            for move in self.legit_moves():
+            for move in self.legits:
                 self.move(move)
                 self.set_player(1)
                 score, _ = self.minmax_action(depth - 1)
@@ -247,18 +258,18 @@ class Gopher_Game:
         value : Action = self.minmax_action(self.profondeur)[1]
         return value
 
-    #@memoizeab
     def alpha_beta_action(self, depth: int = 0, alpha: float = float("-inf"), beta: float = float("inf")) -> tuple[float, Action]:
         """Algorithme alpha-beta"""
+        self.verif()
         best: tuple[float, Action] = (None, None)
-        if depth == 0 or not self.legit_moves():
+        if depth == 0 or not self.legits:
             return (self.score_j1(), None)
 
         original_grid = self.grid.copy()  # Faire une copie de la grille initiale
 
         if self.current_player == 1:
             best_value = float("-inf")
-            for move in self.legit_moves():
+            for move in self.legits:
                 self.move(move)
                 self.set_player(2)
                 score, _ = self.alpha_beta_action(depth - 1, best_value, beta)
@@ -273,7 +284,7 @@ class Gopher_Game:
 
         if self.current_player == 2:
             best_value = float("inf")
-            for move in self.legit_moves():
+            for move in self.legits:
                 self.move(move)
                 self.set_player(1)
                 score, _ = self.alpha_beta_action(depth - 1, alpha, best_value)
@@ -296,15 +307,23 @@ class Gopher_Game:
 
     def strategy_random(self) -> Action:
         """function to play with a random strat"""
-        legits: list[Cell] = self.legit_moves()
-        value = random.randint(0,len(legits)-1)
-        return legits[value]
+        self.verif()
+        value = random.randint(0,len(self.legits)-1)
+        return self.legits[value]
 
     def update_grid_from_state(self, state : State) -> None:
         self.grid = state_to_grid(state)
 
     def get_state_from_grid(self) -> State:
         return grid_to_state(self.grid)
+
+
+
+# CONCLUSIONS DES TESTS A CE JOUR :
+
+# alpha beta et minmax instables (70-90 winrate)
+# alpha beta beaucoup plus rapide que min max même en gérant les symétries
+
 
 
 def test(iter:int,size:int, depth : int) ->None:
@@ -320,7 +339,7 @@ def test(iter:int,size:int, depth : int) ->None:
         game.profondeur = depth
         while game.final():
             if game.current_player==1:
-                play : Action = game.strategy_minmax()
+                play : Action = game.strategy_alpha_beta()
                 game.move(play)
                 game.set_player(player=2)
             else:
@@ -330,10 +349,10 @@ def test(iter:int,size:int, depth : int) ->None:
         # on compte le nombre de parties gagnées par le joueur 1
         if game.current_player == 1:
             if game.score() == 1:score+=1
-            #else:print(game);print(game.grid)
+            else:print(game);print(game.grid)
         else:
             if game.score() == -1:score+=1
-            #else:print(game);print(game.grid)
+            else:print(game);print(game.grid)
         print(game)
         del game
 
@@ -356,14 +375,14 @@ def test(iter:int,size:int, depth : int) ->None:
         f"Nombre de parties gagnées pour le joueur 2: {iter-score} {((iter-score)/iter)*100:.2f}%"
     )
     
-
 def debug() -> None:
 
-    game = Gopher_Game(7,1)
+    # bug dans la vérification des coups legits 
+    game = Gopher_Game(3,1)
 
-    test = {(0, 6): 0, (1, 6): 0, (2, 6): 1, (3, 6): 0, (4, 6): 2, (5, 6): 0, (6, 6): 1, (-1, 5): 2, (0, 5): 1, (1, 5): 0, (2, 5): 2, (3, 5): 0, (4, 5): 1, (5, 5): 0, (6, 5): 2, (-2, 4): 1, (-1, 4): 0, (0, 4): 2, (1, 4): 0, (2, 4): 1, (3, 4): 0, (4, 4): 2, (5, 4): 1, (6, 4): 0, (-3, 3): 0, (-2, 3): 2, (-1, 3): 0, (0, 3): 1, (1, 3): 0, (2, 3): 2, (3, 3): 1, (4, 3): 0, (5, 3): 0, (6, 3): 1, (-4, 2): 0, (-3, 2): 1, (-2, 2): 0, (-1, 2): 0, (0, 2): 2, (1, 2): 1, (2, 2): 0, (3, 2): 2, (4, 2): 1, (5, 2): 2, (6, 2): 0, (-5, 1): 1, (-4, 1): 0, (-3, 1): 2, (-2, 1): 1, (-1, 1): 0, (0, 1): 0, (1, 1): 2, (2, 1): 0, (3, 1): 0, (4, 1): 0, (5, 1): 1, (6, 1): 2, (-6, 0): 0, (-5, 0): 2, (-4, 0): 1, (-3, 0): 0, (-2, 0): 0, (-1, 0): 2, (0, 0): 1, (1, 0): 0, (2, 0): 0, (3, 0): 1, (4, 0): 2, (5, 0): 0, (6, 0): 1, (-6, -1): 1, (-5, -1): 0, (-4, -1): 2, (-3, -1): 1, (-2, -1): 0, (-1, -1): 0, (0, -1): 2, (1, -1): 0, (2, -1): 2, (3, -1): 0, (4, -1): 0, (5, -1): 2, (-6, -2): 2, (-5, -2): 0, (-4, -2): 0, (-3, -2): 2, (-2, -2): 0, (-1, -2): 1, (0, -2): 0, (1, -2): 1, (2, -2): 0, (3, -2): 0, (4, -2): 1, (-6, -3): 1, (-5, -3): 0, (-4, -3): 1, (-3, -3): 0, (-2, -3): 0, (-1, -3): 2, (0, -3): 0, (1, -3): 0, (2, -3): 1, (3, -3): 2, (-6, -4): 2, (-5, -4): 0, (-4, -4): 2, (-3, -4): 1, (-2, -4): 0, (-1, -4): 1, (0, -4): 0, (1, -4): 2, (2, -4): 0, (-6, -5): 1, (-5, -5): 0, (-4, -5): 0, (-3, -5): 2, (-2, -5): 0, (-1, -5): 2, (0, -5): 0, (1, -5): 1, (-6, -6): 2, (-5, -6): 1, (-4, -6): 0, (-3, -6): 0, (-2, -6): 0, (-1, -6): 0, (0, -6): 2}
-    game.grid = test
+    game.grid = {(0, 2): 0, (1, 2): 1, (2, 2): 0, (-1, 1): 1, (0, 1): 0, (1, 1): 2, (2, 1): 0, (-2, 0): 0, (-1, 0): 2, (0, 0): 1, (1, 0): 0, (2, 0): 2, (-2, -1): 1, (-1, -1): 0, (0, -1): 2, (1, -1): 1, (-2, -2): 2, (-1, -2): 0, (0, -2): 0}
     game.firstmove = False
+    print(game)
 
     # symétries 
     '''
@@ -379,8 +398,8 @@ def debug() -> None:
 
     # rotations
 
-    rotate_grid(game.grid)
+    #rotate_grid(game.grid)
 
 #debug()
 
-test(10,10,3)
+test(10,7,4)
