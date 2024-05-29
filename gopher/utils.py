@@ -1,3 +1,5 @@
+from typing import Union
+
 Environment = dict
 Cell = tuple[int, int]
 ActionGopher = Cell

@@ -1,5 +1,4 @@
 """définition des fonctions de la classe du jeu gopher"""
-from typing import Union
 import math
 import random
 from utils import *
