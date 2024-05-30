@@ -463,4 +463,4 @@ def debug() -> None:
     # rotate_grid(game.grid)
 
 #debug()
-test(iter=1, size=7, depth=3,starting=2, mcts_iter=1000)
+test(iter=100, size=3, depth=3,starting=2, mcts_iter=1000)

@@ -22,7 +22,7 @@ class Node:
     def ucb1(self) -> float:
         if self.visits == 0:
             return float('inf')
-        return self.wins / self.visits + math.sqrt(2 * math.log(self.parent.visits) / self.visits)
+        return self.wins / self.visits + math.sqrt(math.sqrt(2) * math.log(self.parent.visits) / self.visits)
 
 class MCTS:
     def __init__(self, root_game) -> None:
@@ -64,6 +64,11 @@ class MCTS:
             result = self.simulation(node.game)
             self.backpropagation(node, result)
 
-        best_child = max(self.root.children, key=lambda child: child.wins / child.visits)
-        return best_child.action
+        if self.root.children:
+            best_child = max(self.root.children, key=lambda child: child.wins / child.visits if child.visits!= 0 else float('-inf'))
+            return best_child.action
+        else:
+            raise ValueError("No children found after MCTS iterations. The game might be already won/lost or no legal moves are available.")
+
+
 
