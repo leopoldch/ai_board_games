@@ -1,0 +1,158 @@
+import copy
+import math
+import random
+import time
+import numpy as np
+from typing import Union
+from dodo import *
+
+
+Environment = dict
+Cell = tuple[int, int]
+ActionGopher = Cell
+ActionDodo = tuple[Cell, Cell] # case de départ -> case d'arrivée
+Action = Union[ActionGopher, ActionDodo]
+Player = int # 1 ou 2
+State = list[tuple[Cell, Player]] # État du jeu pour la boucle de jeu
+Score = int
+Time = int
+Grid = dict[Cell:Player]
+
+
+# tree node class definition
+class TreeNode():
+    # class constructor (create tree node class instance)
+    def __init__(self, state, parent=None):
+        # init associated board state
+        self.state = state
+
+        # init parent node if available
+        self.parent = parent
+
+        # init the number of node visits
+        self.visits = 0
+
+        # init the total score of the node
+        self.score = 0
+
+        # init current node's children
+        self.children = {}
+
+        self.player = 1 if self.parent is None else 3 - self.parent.player
+
+        self.possibles_actions = legit_moves(self.state, self.player)
+
+    #@property
+    #def player(self):
+     #   return 1 if self.parent is None else 3 - self.parent.player
+
+
+    def is_expanded(self):
+        return len(self.possibles_actions) == 0
+
+
+    def expand(self):
+
+        action = self.possibles_actions.pop()
+        possible_state = move(self.state,action,self.player)
+
+        child = TreeNode(possible_state,self)
+        self.children[action] = child
+        return child
+
+
+    def best_child(self, exploration_param= 0.8):
+        best_score = -float('inf')
+        best_children = []
+
+        for action, child in self.children.items():
+            score = (child.score / child.visits) + exploration_param * np.sqrt(np.log(self.visits) / child.visits)
+            if score > best_score:
+                best_score = score
+                best_children = [child]
+            elif score == best_score:
+                best_children.append(child)
+
+        return random.choice(best_children)
+
+    def backpropagation(self, score):
+        # update visits
+        self.visits += 1
+        # update  score
+        self.score += score
+        #propagate to the root
+        if self.parent:
+            self.parent.backpropagation(-score)
+
+
+    def rollout(self):
+        # make random moves for both sides until terminal state of the game is reached
+        state = copy.deepcopy(self.state)
+        current_player = self.player
+        while not final(state):
+            actions: list[ActionDodo] = legit_moves(state, current_player)
+            play = actions[random.randint(0, len(actions) - 1)]
+            state = move(state, play, current_player)
+            current_player = 3 - current_player
+            #print("le current player est", current_player)
+
+        return score(state,self.player)
+
+
+    def select(self):
+
+        current_node = self
+        while not final(current_node.state): #impose une limite de temps sinon trop long
+            if current_node.is_expanded():
+                current_node = current_node.best_child()
+            else:
+                return current_node.expand()
+        return current_node
+
+
+# MCTS class definition
+class MCTS():
+    def __init__(self, root):
+        self.root = root
+
+    def search(self,iter): # trying to search best state for current player
+
+        for _ in range(iter):
+            node = self.root.select() #selection and expansion if needed
+            score = node.rollout() #simulation
+            node.backpropagation(score) #backpropagation of the score
+
+        return self.root.best_child(0) #only best no exploration
+
+def mcts_test(iter, size):
+    board = create_board(size)
+    start = init_board(board)
+    root = TreeNode(start)
+    mcts = MCTS(root)
+    result = mcts.search(iter)
+    return result.state
+
+
+
+
+    # expand node
+
+
+    # simulate the game via making random moves until reach end of the game
+
+
+    # backpropagate the number of visits and score up to the root node
+
+
+    # select the best node basing on UCB1 formula
+
+
+    # random choice parmi ceux qui ont la meme valeur UCT ?
+
+
+
+
+# Running the test
+print(mcts_test(30, 7))
+
+
