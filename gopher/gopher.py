@@ -30,7 +30,8 @@ class Gopher_Game:
         self.create_board()
         self.__updated = False
         self.__legits: list[Cell] = []
-        self.__last_move = None
+        self.__played = []
+        self.__starting = starting_player
 
     def set_player(self, player: Player):
         if player not in [1, 2]:
@@ -190,7 +191,7 @@ class Gopher_Game:
             self.__grid[cell] = self.__current_player
             self.__updated = False
             self.__legits = []
-            self.__last_move = cell
+            self.__played.append(cell)
 
     def score(self) -> float:
         """evaluation func"""
@@ -267,8 +268,13 @@ class Gopher_Game:
 
     def strategy_minmax(self) -> Action:
         """strategy de jeu avec minmax"""
-        if self.__firstmove:
+        length : int = len(self.__played)
+        if self.__firstmove or (0,0) in self.__legits:
             return (0, 0)
+        elif length>1 and self.__starting == self.__current_player and self.__size%2==1:
+            length-=1
+            next_cell : Cell = self.get_direction()
+            if next_cell in self.__legits:return next_cell
         value: Action = self.minmax_action(self.__profondeur)[1]
         return value
 
@@ -317,8 +323,13 @@ class Gopher_Game:
 
     def strategy_alpha_beta(self) -> Action:
         """strategy de jeu avec minmax"""
-        if self.__firstmove:
+        length : int = len(self.__played)
+        if self.__firstmove or (0,0) in self.__legits:
             return (0, 0)
+        elif length>1 and self.__starting == self.__current_player and self.__size%2==1:
+            length-=1
+            next_cell : Cell = self.get_direction()
+            if next_cell in self.__legits:return next_cell
         value: Action = self.alpha_beta_action(self.__profondeur)[1]
         return value
 
@@ -359,10 +370,34 @@ class Gopher_Game:
         """getter pour l'attrbut legit"""
         self.verif();return self.__legits
 
+    def get_direction(self) -> Cell:
+        last : Cell = self.__played[-1]
+        value = self.__grid[last]
+        verif = 0
+        aligned = None
+        for tup in self.get_neighbors(last[0],last[1]):
+            if self.__grid[tup] == 3-value:
+                # un seul résultat 
+                verif+=1
+                aligned = tup
+        if verif >1 or verif ==0:
+            raise ValueError("Incohérence dans le jeu")
+        dx : int = last[0] - aligned[0]
+        dy : int = last[1] - aligned[1]
+        next_cell = (last[0]+dx,last[1]+dy)
+        return next_cell
+
+
+
+
+
 # CONCLUSIONS DES TESTS A CE JOUR :
 
-# alpha beta et minmax instables (70-90 winrate)
-# alpha beta beaucoup plus rapide que min max même en gérant les symétries
+# si on commence sur une taille impair l'IA gagne à 100%
+# Dans tous les autres cas alors l'IA minmax avec cache est similaire au alpha-beta m
+# Je dirai à vue d'oeil que ab est meilleur que min max 
+# Dans tous les autres cas si pair et/ou joueur 2 commence on gagne dans 65-90% des cas 
+# face à un random
 
 
 def test(iter: int, size: int, depth: int) -> None:
@@ -421,30 +456,11 @@ def debug() -> None:
 
     # bug dans la vérification des coups legits
     game = Gopher_Game(3, 1)
-    test = {
-        (0, 2): 0,
-        (1, 2): 1,
-        (2, 2): 0,
-        (-1, 1): 1,
-        (0, 1): 0,
-        (1, 1): 2,
-        (2, 1): 0,
-        (-2, 0): 0,
-        (-1, 0): 2,
-        (0, 0): 1,
-        (1, 0): 0,
-        (2, 0): 2,
-        (-2, -1): 1,
-        (-1, -1): 0,
-        (0, -1): 2,
-        (1, -1): 1,
-        (-2, -2): 2,
-        (-1, -2): 0,
-        (0, -2): 0,
-    }
-    game.set_grid(test)
-    game.firstmove = False
-    print(game)
+    game.move((0,0))
+    game.set_player(2)
+    game.move((-1,0))
+    game.set_player(1)
+    game.get_direction()
 
     # symétries
     """
@@ -457,10 +473,8 @@ def debug() -> None:
     game.grid = invert_grid_v(game.grid)
     print(game)
     """
-
     # rotations
     # rotate_grid(game.grid)
 
-
-# debug()
-test(100, 7, 5)
+#debug()
+test(100, 8, 3)

@@ -49,7 +49,7 @@ def grid_to_state(grid: Grid) -> State:
 def memoize(func):
     cache = {}
     def memoized_func(self, depth=3):
-        key = tuple((pos, val) for pos, val in self.grid.items())
+        key = tuple((pos, val) for pos, val in self.get_grid().items())
         if key in cache and self.is_legit(cache[key][1]):
             return cache[key]
         result = func(self, depth)
@@ -58,7 +58,7 @@ def memoize(func):
         if tup!= None:
             cache[key] = result
             # symétries horizontales et verticales
-            t1 : Grid = self.grid
+            t1 : Grid = self.get_grid()
             s1 = invert_grid_h(t1)
             r1 = invert_coord_h(tup)
             r1 = (eval,r1)
@@ -148,6 +148,7 @@ def rotate_grid(grid :Grid) -> None:
         value :int = rang(x,y)
         print(value)
         
+
 import math
 import random
 
