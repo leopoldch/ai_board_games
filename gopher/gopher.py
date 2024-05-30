@@ -3,6 +3,7 @@
 import time
 import copy
 from utils import *
+from mcts import *
 
 
 class Gopher_Game:
@@ -324,11 +325,12 @@ class Gopher_Game:
         value: Action = self.alpha_beta_action(self.__profondeur)[1]
         return value
 
-    def strategy_mcts(self):
+    def strategy_mcts(self, iterations : int) -> Action:
         if self.__firstmove:
             return (0, 0)
-        value = mcts(self, 1000) 
-        return value
+        mcts_search = MCTS(self.copy())
+        return mcts_search.search(iterations)
+
 
     def strategy_random(self) -> Action:
         """function to play with a random strat"""
@@ -390,7 +392,7 @@ class Gopher_Game:
 # face à un random
 
 
-def test(iter: int, size: int, depth: int,starting : Player) -> None:
+def test(iter: int, size: int, depth: int,starting : Player,mcts_iter : int) -> None:
     score: int = 0
     tps1 = time.time()
     for i in range(iter):
@@ -403,7 +405,7 @@ def test(iter: int, size: int, depth: int,starting : Player) -> None:
         game.set_depth(depth)
         while game.final():
             if game.get_player() == 1:
-                play: Action = game.strategy_alpha_beta()
+                play: Action = game.strategy_mcts(mcts_iter)
                 game.move(play)
                 game.set_player(player=2)
             else:
@@ -414,16 +416,10 @@ def test(iter: int, size: int, depth: int,starting : Player) -> None:
         if game.get_player() == 1:
             if game.score() == 1:
                 score += 1
-            else:
-                print(game)
-                print(game.get_grid())
         else:
             if game.score() == -1:
                 score += 1
-            else:
-                print(game)
-                print(game.get_grid())
-        print(game)
+        #print(game)
         del game
 
     temps: float = time.time() - tps1
@@ -467,4 +463,4 @@ def debug() -> None:
     # rotate_grid(game.grid)
 
 #debug()
-test(iter=10000, size=9, depth=2,starting=2)
+test(iter=1, size=7, depth=3,starting=2, mcts_iter=1000)
