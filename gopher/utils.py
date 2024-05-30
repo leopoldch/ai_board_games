@@ -1,5 +1,7 @@
-from typing import Union,Callable
+from typing import Union,Optional
 import os
+import math
+import random
 
 Environment = dict
 Cell = tuple[int, int]
@@ -146,5 +148,84 @@ def rotate_grid(grid :Grid) -> None:
         value :int = rang(x,y)
         print(value)
         
+import math
+import random
+
+class Node:
+    """Classe d'un noeud de l'arbre MCTS"""
+
+    def __init__(self, game, parent=None):
+        """Initialisation des attributs"""
+        self.game = game
+        self.parent = parent
+        self.children = []
+        self.visits = 0
+        self.score = 0
+
+    def select_child(self):
+        """Sélectionner le meilleur enfant du noeud actuel"""
+        best_score = float('-inf')
+        best_child = None
+        for child in self.children:
+            score = child.score / child.visits + math.sqrt(2 * math.log(self.visits) / child.visits)
+            if score > best_score:
+                best_score = score
+                best_child = child
+        return best_child
+
+    def expand(self):
+        """Jouer un nouveau coup et créer un noeud"""
+        legit_moves = self.game.get_legits()
+        if legit_moves:
+            move = random.choice(legit_moves)
+            new_game = self.game.copy()
+            new_game.move(move)
+            new_node = Node(new_game, self)
+            self.children.append(new_node)
+            return new_node
+        return None
+
+    def backpropagate(self, score):
+        """Backpropagation"""
+        self.visits += 1
+        self.score += score
+        if self.parent:
+            self.parent.backpropagate(-score)
+
+def mcts(game, iterations):
+    root = Node(game.copy())
+    for _ in range(iterations):
+        node = root
+        while True:
+            if node.children:
+                node = node.select_child()
+            else:
+                if node.game.final():
+                    break
+                expanded_node = node.expand()
+                if expanded_node is None:
+                    break
+                node = expanded_node
+                break
+        if not node.game.final():
+            node.backpropagate(node.game.score())
+        else:
+            move = node.game.strategy_random()  
+            node.game.move(move)
+            if node.game.get_player() ==1:node.game.set_player(2)
+            else:node.game.set_player(1)
+            node.backpropagate(node.game.score())
+    if root.children:
+        best_child = max(root.children, key=lambda node: node.visits)
+        return best_child.game.last_move() 
+    else:
+        # Si root.children est vide, jouer un coup aléatoire
+        print('raté')
+        legit_moves = game.get_legits()
+        if legit_moves:
+            return random.choice(legit_moves)
+        else:
+            return None
+
 
 
