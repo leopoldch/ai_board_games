@@ -48,9 +48,11 @@ def grid_to_state(grid: Grid) -> State:
 
 def memoize(func):
     cache = {}
+    
     def memoized_func(self, depth=3):
         key = tuple((pos, val) for pos, val in self.get_grid().items())
         if key in cache and self.is_legit(cache[key][1]):
+            #print("accessed cache successfully", self.is_legit(cache[key][1]),cache[key][1], f'length : {len(cache)}')
             return cache[key]
         result = func(self, depth)
         tup : Cell = result[1]
@@ -148,10 +150,6 @@ def rotate_grid(grid :Grid) -> None:
         value :int = rang(x,y)
         print(value)
         
-
-import math
-import random
-
 class Node:
     """Classe d'un noeud de l'arbre MCTS"""
 

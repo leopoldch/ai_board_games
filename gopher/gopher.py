@@ -8,15 +8,6 @@ from utils import *
 class Gopher_Game:
     """classe du jeu gopher"""
 
-    # Pour améliorer encore le temps d'éxécution il est possible de stocker
-    # les coups légaux avec un attribut de la classe qu'on met à jour à chaque
-    # changement de la grille
-    # idée : parcourir toute la grille et dès qu'une valeur est différente alors
-    # on regarde parmis ses voisins si d'autres coups sont légaux
-    # de cette manière c'est moins couteux que de reparcourir toute la grille
-    # à chaque fois qu'on veut connaitre les coups légaux
-    # fonction check_grid() qu'on peut appeller à des moments clés
-
     def verif(self) -> None:
         if not self.__updated:
             self.legit_moves()
@@ -235,7 +226,7 @@ class Gopher_Game:
         best: tuple[float, Action] = (None, None)
         self.verif()
         if depth == 0 or not self.__legits:
-            return (self.score_j1(), None)
+            return (self.score(), None)
         original_grid = self.__grid.copy()  # Faire une copie de la grille initiale
 
         if self.__current_player == 1:
@@ -285,7 +276,7 @@ class Gopher_Game:
         self.verif()
         best: tuple[float, Action] = (None, None)
         if depth == 0 or not self.__legits:
-            return (self.score_j1(), None)
+            return (self.score(), None)
 
         original_grid = self.__grid.copy()  # Faire une copie de la grille initiale
 
@@ -390,7 +381,6 @@ class Gopher_Game:
 
 
 
-
 # CONCLUSIONS DES TESTS A CE JOUR :
 
 # si on commence sur une taille impair l'IA gagne à 100%
@@ -400,7 +390,7 @@ class Gopher_Game:
 # face à un random
 
 
-def test(iter: int, size: int, depth: int) -> None:
+def test(iter: int, size: int, depth: int,starting : Player) -> None:
     score: int = 0
     tps1 = time.time()
     for i in range(iter):
@@ -409,7 +399,7 @@ def test(iter: int, size: int, depth: int) -> None:
             print(f"Avancement : ", end=" ")
             compteur: int = math.ceil((i / iter) * 100)
             print("[" + compteur * "-" + ((100 - compteur) * " " + "]"))
-        game = Gopher_Game(size=size, starting_player=1)
+        game = Gopher_Game(size=size, starting_player=starting)
         game.set_depth(depth)
         while game.final():
             if game.get_player() == 1:
@@ -439,7 +429,7 @@ def test(iter: int, size: int, depth: int) -> None:
     temps: float = time.time() - tps1
     print()
     print(
-        f"Nombre d'itérations : {iter} | Taille de la grille : {size} | pronfondeur minmax : {depth}"
+        f"Nombre d'itérations : {iter} | Taille de la grille : {size} | pronfondeur : {depth} | joueur de départ : {starting}"
     )
     print(f"Temps d'éxécution  : {temps:.4f} secondes")
     if iter > 1:
@@ -477,4 +467,4 @@ def debug() -> None:
     # rotate_grid(game.grid)
 
 #debug()
-test(100, 8, 3)
+test(iter=10000, size=9, depth=2,starting=2)
