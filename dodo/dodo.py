@@ -356,4 +356,3 @@ test(50,10)
 #print(board7)
 #print_board(board7)
 
-
