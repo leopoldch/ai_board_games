@@ -405,11 +405,11 @@ def test(iter: int, size: int, depth: int,starting : Player,mcts_iter : int) -> 
         game.set_depth(depth)
         while game.final():
             if game.get_player() == 1:
-                play: Action = game.strategy_mcts(mcts_iter)
+                play: Action = game.strategy_random()
                 game.move(play)
                 game.set_player(player=2)
             else:
-                play: Action = game.strategy_random()
+                play: Action = game.strategy_mcts(mcts_iter)
                 game.move(play)
                 game.set_player(player=1)
         # on compte le nombre de parties gagnées par le joueur 1
@@ -419,7 +419,7 @@ def test(iter: int, size: int, depth: int,starting : Player,mcts_iter : int) -> 
         else:
             if game.score() == -1:
                 score += 1
-        #print(game)
+        print(game)
         del game
 
     temps: float = time.time() - tps1
@@ -463,4 +463,4 @@ def debug() -> None:
     # rotate_grid(game.grid)
 
 #debug()
-test(iter=100, size=3, depth=3,starting=2, mcts_iter=1000)
+test(iter=10000, size=4, depth=2,starting=1, mcts_iter=100)
