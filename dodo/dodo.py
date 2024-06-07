@@ -3,6 +3,7 @@ import math
 import random
 import time
 from typing import Union
+from utils import *
 
 Environment = dict
 Cell = tuple[int, int]
@@ -274,41 +275,7 @@ def final(state: State) -> bool:
 
 
 
-'''
-def minmax(state: State, player: Player) -> float:
-    """basic min max"""
-    player1: Player = 1
-    player2: Player = 2
-    possibilities: list[Action]
-    best: float
-    
-    if score(state):
-        return score(grid, player1)
 
-    if player == 1:  # maximazing player
-        best = float("-inf")
-        possibilities = legals(grid)
-        print("joueur1", possibilities)
-        for item in possibilities:
-            tmp = play(grid, player, item)
-            val = minmax(tmp, player2)
-            if max(best, val) == val:
-                best = val
-        return best
-
-    if player == 2:  # minimizing player
-        best = float("inf")
-        possibilities = legals(grid)
-        print("joueur2", possibilities)
-        for item in possibilities:
-            tmp = play(grid, player, item)
-            val = minmax(tmp, player1)
-            if min(best, val) == val:
-                best = val
-        return best
-
-    raise ValueError("erreur pas de joeur connu")
-'''
 
 
 def strategy(env: Environment, state: State, player: Player,time_left: Time) -> tuple[Environment, Action]:
@@ -318,6 +285,242 @@ def strategy(env: Environment, state: State, player: Player,time_left: Time) -> 
         return ({},legits[value])
     else:
         return ({},[])
+
+
+def evaluate(state: State, player: Player) -> float:
+    """
+    Evaluation function to assess the desirability of the game state for the given player.
+    Higher values indicate a better state for the player, while lower values indicate a worse state.
+    """
+    opponent = 3 - player
+
+    def race_turns_left(state: State, player: Player) -> int:
+        """
+        Calculate the minimum number of moves needed to reach the opponent's side of the board.
+        """
+        grid = state_to_grid(state)
+        if player == 1:
+            directions = [(1, 0), (1, 1), (0, 1)]
+        else:
+            directions = [(-1, 0), (-1, -1), (0, -1)]
+
+        race_turns = 0
+        for cell, occupant in grid.items():
+            if occupant == player:
+                min_distance = float('inf')
+                for direction in directions:
+                    steps = 0
+                    next_cell = (cell[0], cell[1])
+                    while next_cell in grid and grid[next_cell] == 0:
+                        steps += 1
+                        next_cell = (next_cell[0] + direction[0], next_cell[1] + direction[1])
+                    if steps < min_distance:
+                        min_distance = steps
+                race_turns += min_distance
+
+        return race_turns
+
+    def count_flexible_moves(state: State, player: Player) -> int:
+        """
+        Count the number of variable biding moves available to the player.
+        """
+        grid = state_to_grid(state)
+        if player == 1:
+            directions = [(1, 0), (1, 1), (0, 1)]
+        else:
+            directions = [(-1, 0), (-1, -1), (0, -1)]
+
+        flexible_moves = 0
+        for cell, occupant in grid.items():
+            if occupant == player:
+                for direction in directions:
+                    next_cell = (cell[0] + direction[0], cell[1] + direction[1])
+                    if next_cell in grid and grid[next_cell] == 0:
+                        flexible_moves += 1
+
+        return flexible_moves
+
+    def count_blockades(state: State, player: Player) -> int:
+        """
+        Count the number of pieces forming blockades against the opponent.
+        """
+        grid = state_to_grid(state)
+        blockades = 0
+        if player == 1:
+            directions = [(1, 0), (1, 1), (0, 1)]
+        else:
+            directions = [(-1, 0), (-1, -1), (0, -1)]
+
+        for cell, occupant in grid.items():
+            if occupant == player:
+                for direction in directions:
+                    next_cell = (cell[0] + direction[0], cell[1] + direction[1])
+                    if next_cell in grid and grid[next_cell] == 3 - player:
+                        blockades += 1
+
+        return blockades
+
+    def count_arrested_pieces(state: State, player: Player) -> int:
+        """
+        Count the number of opponent's pieces that are arrested by the player's pieces.
+        """
+        grid = state_to_grid(state)
+        arrested_pieces = 0
+        if player == 1:
+            directions = [(1, 0), (1, 1), (0, 1)]
+        else:
+            directions = [(-1, 0), (-1, -1), (0, -1)]
+
+        for cell, occupant in grid.items():
+            if occupant == player:
+                for direction in directions:
+                    next_cell = (cell[0] + direction[0], cell[1] + direction[1])
+                    if next_cell in grid and grid[next_cell] == 3 - player:
+                        arrested_pieces += 1
+
+        return arrested_pieces
+
+    # Calculate various aspects of the board state
+    player_race_turns = race_turns_left(state, player)
+    opponent_race_turns = race_turns_left(state, opponent)
+    player_flexible_moves = count_flexible_moves(state, player)
+    opponent_flexible_moves = count_flexible_moves(state, opponent)
+    player_blockades = count_blockades(state, player)
+    opponent_blockades = count_blockades(state, opponent)
+    player_arrested_pieces = count_arrested_pieces(state, player)
+    opponent_arrested_pieces = count_arrested_pieces(state, opponent)
+
+    # Weigh each aspect to form the final evaluation score
+    race_weight = -1.0  # Lower race turns are better
+    flexibility_weight = 0.5
+    blockade_weight = 0.7
+    arrested_weight = 0.8
+
+    evaluation_score = (
+            race_weight * (player_race_turns - opponent_race_turns) +
+            flexibility_weight * (player_flexible_moves - opponent_flexible_moves) +
+            blockade_weight * (player_blockades - opponent_blockades) +
+            arrested_weight * (player_arrested_pieces - opponent_arrested_pieces)
+    )
+
+    return evaluation_score
+
+
+def evaluation(state: State, player: Player) -> float:
+    """
+    Evaluation function to assess the desirability of the game state for the given player.
+    Higher values indicate a better state for the player, while lower values indicate a worse state.
+    """
+    opponent = 3 - player
+
+    # Helper functions (they remain the same as the corrected versions provided earlier)
+
+    def race_turns_left(state: State, player: Player) -> int:
+        """
+        Calculate the minimum number of moves needed to reach the opponent's side of the board.
+        """
+        grid = state_to_grid(state)
+        player_positions = [pos for pos, occupant in grid.items() if occupant == player]
+
+        if not player_positions:
+            return float('inf')  # No pieces to move
+
+        min_turns = float('inf')
+        for pos in player_positions:
+            if player == 1:
+                distance = 7 - pos[0]  # Assuming a 8x8 grid, 7 is the farthest row for player 1
+            else:
+                distance = pos[0]  # Player 2's goal is to reach the 0th row
+            if distance < min_turns:
+                min_turns = distance
+        return min_turns
+
+    def count_flexible_moves(state: State, player: Player) -> int:
+        """
+        Count the number of variable binding moves available to the player.
+        """
+        grid = state_to_grid(state)
+        flexible_moves = 0
+        directions = [(1, 0), (1, 1), (0, 1), (1, -1)] if player == 1 else [(-1, 0), (-1, -1), (0, -1), (-1, 1)]
+
+        for cell, occupant in grid.items():
+            if occupant == player:
+                for direction in directions:
+                    next_cell = (cell[0] + direction[0], cell[1] + direction[1])
+                    if next_cell in grid and grid[next_cell] == 0:
+                        flexible_moves += 1
+        return flexible_moves
+
+    def count_blockades(state: State, player: Player) -> int:
+        """
+        Count the number of pieces forming blockades against the opponent.
+        """
+        grid = state_to_grid(state)
+        blockades = 0
+        directions = [(1, 0), (0, 1), (-1, 0), (0, -1)]  # Orthogonal directions
+
+        for cell, occupant in grid.items():
+            if occupant == player:
+                for direction in directions:
+                    next_cell = (cell[0] + direction[0], cell[1] + direction[1])
+                    if next_cell in grid and grid[next_cell] == 3 - player:
+                        # Check if the opponent piece is blocked
+                        is_blocked = True
+                        for d in directions:
+                            adjacent = (next_cell[0] + d[0], next_cell[1] + d[1])
+                            if adjacent in grid and grid[adjacent] == 0:
+                                is_blocked = False
+                                break
+                        if is_blocked:
+                            blockades += 1
+
+        return blockades
+
+    def count_arrested_pieces(state: State, player: Player) -> int:
+        """
+        Count the number of opponent's pieces that are surrounded by the player's pieces, restricting their movement.
+        """
+        grid = state_to_grid(state)
+        arrested_pieces = 0
+        directions = [(1, 0), (0, 1), (-1, 0), (0, -1)]  # Orthogonal directions
+
+        for cell, occupant in grid.items():
+            if occupant == 3 - player:
+                is_arrested = True
+                for direction in directions:
+                    adjacent = (cell[0] + direction[0], cell[1] + direction[1])
+                    if adjacent in grid and grid[adjacent] == 0:
+                        is_arrested = False
+                        break
+                if is_arrested:
+                    arrested_pieces += 1
+
+        return arrested_pieces
+
+    # Calculate various aspects of the board state
+    player_race_turns = race_turns_left(state, player)
+    opponent_race_turns = race_turns_left(state, opponent)
+    player_flexible_moves = count_flexible_moves(state, player)
+    opponent_flexible_moves = count_flexible_moves(state, opponent)
+    player_blockades = count_blockades(state, player)
+    opponent_blockades = count_blockades(state, opponent)
+    player_arrested_pieces = count_arrested_pieces(state, player)
+    opponent_arrested_pieces = count_arrested_pieces(state, opponent)
+
+    # Weigh each aspect to form the final evaluation score
+    race_weight = -1.0  # Lower race turns are better
+    flexibility_weight = 0.5
+    blockade_weight = 0.7
+    arrested_weight = 0.8
+
+    evaluation_score = (
+            race_weight * (player_race_turns - opponent_race_turns) +
+            flexibility_weight * (player_flexible_moves - opponent_flexible_moves) +
+            blockade_weight * (player_blockades - opponent_blockades) +
+            arrested_weight * (player_arrested_pieces - opponent_arrested_pieces)
+    )
+
+    return evaluation_score
 
 
 def test(iter : int, size : int):
@@ -339,7 +542,7 @@ def test(iter : int, size : int):
             plays = strategy({},state,current_player,0)[1]
             #print("voici le coup qui sera joué", plays)
             #print_board(state)
-        print("voici le score des rouges",score(state,1),"et voici le score des bleus", score(state,2))
+        #print("voici le score des rouges",score(state,1),"et voici le score des bleus", score(state,2))
         if score(state,1)==1:
             stats1+=1
         elif score(state,2)==1:
@@ -350,9 +553,10 @@ def test(iter : int, size : int):
     print(f"Nombre de parties gagnées pour le joueur 2: {(stats2/iter)*100:.2f}%")
 
 
-test(50,10)
+#test(50,10)
 #board7 = create_board(7)
 #board7 = init_board(board7)
 #print(board7)
 #print_board(board7)
+
 

@@ -3,7 +3,7 @@
 import time
 import copy
 from utils import *
-from mcts import *
+from mctsv2 import *
 
 
 class Gopher_Game:
@@ -139,6 +139,37 @@ class Gopher_Game:
                             neighbors.append(key)
         return neighbors
 
+    def evaluate(self, cell: Cell) -> float:
+        """Evaluate the potential of a move."""
+        score = 0
+        self.legit_moves()
+        # Check if the move wins the game
+        if len(self.__legits) == 0:
+            score = 100
+        # Check if the move forces the opponent into a losing move
+        elif len(self.__legits) == 1:
+            score = 50
+        else:
+            # Evaluate potential future moves
+            future_moves = len(self.__legits)
+            if future_moves > 3:
+                score += 3
+            elif future_moves == 3:
+                score += 2
+            else:
+                score += 1
+        return -score
+
+    def is_center(self, cell: Cell) -> bool:
+        """Check if the cell is in the center of the board."""
+        center = (0, 0) 
+        return cell == center
+
+    def is_strategic_position(self, cell: Cell) -> bool:
+        """Check if the cell is in a strategic position."""
+        strategic_positions = [(0, 0), (0, 1), (1, 0), (-1, -1)]
+        return cell in strategic_positions
+
     def is_legit(self, start: Cell) -> bool:
         """returns if move is legit or not"""
         if self.__firstmove:
@@ -151,6 +182,8 @@ class Gopher_Game:
         neighbors: list[Cell] = self.get_neighbors(start[0], start[1])
         verif: int = 0
         for item in neighbors:
+            if verif>1:
+                return False
             if self.__grid[(item[0], item[1])] == self.__current_player:
                 return False
             if self.__current_player == 1:
@@ -195,7 +228,6 @@ class Gopher_Game:
         else:
             return -1
 
-    def score_j1(self) -> float:
         """evaluation func"""
         v: bool = False
         if self.__current_player == 2:
@@ -223,11 +255,13 @@ class Gopher_Game:
 
     @memoize
     def minmax_action(self, depth: int = 0) -> tuple[float, Action]:
-        """minmax function"""
+        """Minimax function using evaluate for move evaluation."""
         best: tuple[float, Action] = (None, None)
         self.verif()
+
         if depth == 0 or not self.__legits:
             return (self.score(), None)
+
         original_grid = self.__grid.copy()  # Faire une copie de la grille initiale
 
         if self.__current_player == 1:
@@ -236,9 +270,12 @@ class Gopher_Game:
                 self.move(move)
                 self.set_player(2)
                 score, _ = self.minmax_action(depth - 1)
-                if score > best_value:
-                    best_value = score
-                    best = (score, move)
+                # Use evaluate to assess the move
+                move_score = self.evaluate(move)
+                total_score = score + move_score
+                if total_score > best_value:
+                    best_value = total_score
+                    best = (total_score, move)
                 self.__grid = original_grid.copy()  # Restaurer la grille initiale
                 self.set_player(1)
             return best
@@ -249,20 +286,26 @@ class Gopher_Game:
                 self.move(move)
                 self.set_player(1)
                 score, _ = self.minmax_action(depth - 1)
-                if score < best_value:
-                    best_value = score
-                    best = (score, move)
+                # Use evaluate to assess the move
+                move_score = self.evaluate(move)
+                total_score = score + move_score
+                if total_score < best_value:
+                    best_value = total_score
+                    best = (total_score, move)
                 self.__grid = original_grid.copy()  # Restaurer la grille initiale
                 self.set_player(2)
             return best
 
         raise ValueError("Joueur inconnu")
 
+
     def strategy_minmax(self) -> Action:
         """strategy de jeu avec minmax"""
         length : int = len(self.__played)
-        if self.__firstmove or (0,0) in self.__legits:
+        if self.__firstmove and self.__size%2==1:
             return (0, 0)
+        elif self.__firstmove and self.__size%2==0:
+            return (0,self.__size-1)
         elif length>1 and self.__starting == self.__current_player and self.__size%2==1:
             length-=1
             next_cell : Cell = self.get_direction()
@@ -273,9 +316,10 @@ class Gopher_Game:
     def alpha_beta_action(
         self, depth: int = 0, alpha: float = float("-inf"), beta: float = float("inf")
     ) -> tuple[float, Action]:
-        """Algorithme alpha-beta"""
+        """Alpha-beta pruning function using evaluate for move evaluation."""
         self.verif()
         best: tuple[float, Action] = (None, None)
+
         if depth == 0 or not self.__legits:
             return (self.score(), None)
 
@@ -287,9 +331,12 @@ class Gopher_Game:
                 self.move(move)
                 self.set_player(2)
                 score, _ = self.alpha_beta_action(depth - 1, best_value, beta)
-                if score > best_value:
-                    best_value = score
-                    best = (score, move)
+                # Use evaluate to assess the move
+                move_score = self.evaluate(move)
+                total_score = score + move_score
+                if total_score > best_value:
+                    best_value = total_score
+                    best = (total_score, move)
                 self.__grid = original_grid.copy()  # Restaurer la grille initiale
                 self.set_player(1)
                 if best_value >= beta:
@@ -302,9 +349,12 @@ class Gopher_Game:
                 self.move(move)
                 self.set_player(1)
                 score, _ = self.alpha_beta_action(depth - 1, alpha, best_value)
-                if score < best_value:
-                    best_value = score
-                    best = (score, move)
+                # Use evaluate to assess the move
+                move_score = self.evaluate(move)
+                total_score = score + move_score
+                if total_score < best_value:
+                    best_value = total_score
+                    best = (total_score, move)
                 self.__grid = original_grid.copy()  # Restaurer la grille initiale
                 self.set_player(2)
                 if best_value <= alpha:
@@ -313,24 +363,53 @@ class Gopher_Game:
 
         raise ValueError("Joueur inconnu")
 
+
     def strategy_alpha_beta(self) -> Action:
         """strategy de jeu avec minmax"""
         length : int = len(self.__played)
-        if self.__firstmove or (0,0) in self.__legits:
+        if self.__firstmove and self.__size%2==1:
             return (0, 0)
-        elif length>1 and self.__starting == self.__current_player and self.__size%2==1:
+        elif self.__firstmove and self.__size%2==0:
+            return (0,self.__size-1)
+        elif (length>1 and self.__starting == self.__current_player and self.__size%2==1):
             length-=1
             next_cell : Cell = self.get_direction()
             if next_cell in self.__legits:return next_cell
         value: Action = self.alpha_beta_action(self.__profondeur)[1]
         return value
 
-    def strategy_mcts(self, iterations : int) -> Action:
-        if self.__firstmove:
+    def strategy_mcts(self) -> Action:
+        length : int = len(self.__played)
+        if self.__firstmove and self.__size%2==1:
             return (0, 0)
-        mcts_search = MCTS(self.copy())
-        return mcts_search.search(iterations)
+        elif self.__firstmove and self.__size%2==0:
+            return (0,self.__size-1)
+        elif length>1 and self.__starting == self.__current_player and self.__size%2==1:
+            length-=1
+            next_cell : Cell = self.get_direction()
+            if next_cell in self.__legits:return next_cell
+        return mcts(self.copy())
 
+    def strategy_pers(self) -> Action:
+            """strategy de jeu avec minmax"""
+            length : int = len(self.__played)
+            if self.__firstmove:
+                if self.__size%2==0:
+                    return(0,self.__size-1)
+                else:
+                    return (0, 0)
+            elif length>1 and self.__starting == self.__current_player:
+                length-=1
+                next_cell : Cell = self.get_direction()
+                if next_cell in self.__legits:
+                    if self.__size%2==0 and len(self.__legits)>1:
+                        self.__legits.remove(next_cell)
+                        value = random.randint(0, len(self.__legits) - 1)
+                        return self.__legits[value]
+                    else:
+                        return next_cell
+            value: Action = self.minmax_action(self.__profondeur)[1]
+            return value
 
     def strategy_random(self) -> Action:
         """function to play with a random strat"""
@@ -380,87 +459,26 @@ class Gopher_Game:
         next_cell = (last[0]+dx,last[1]+dy)
         return next_cell
 
+    def save_state(self) -> dict:
+        """Sauvegarde l'état actuel du jeu sous forme de dictionnaire."""
+        return {
+            'grid': self.__grid.copy(),
+            'current_player': self.__current_player,
+            'firstmove': self.__firstmove,
+            'size': self.__size,
+            'legits': self.__legits,
+            'played': self.__played,
+            'starting': self.__starting,
+            'updated': self.__updated,
+        }
 
-
-
-# CONCLUSIONS DES TESTS A CE JOUR :
-
-# si on commence sur une taille impair l'IA gagne à 100%
-# Dans tous les autres cas alors l'IA minmax avec cache est similaire au alpha-beta m
-# Je dirai à vue d'oeil que ab est meilleur que min max 
-# Dans tous les autres cas si pair et/ou joueur 2 commence on gagne dans 65-90% des cas 
-# face à un random
-
-
-def test(iter: int, size: int, depth: int,starting : Player,mcts_iter : int) -> None:
-    score: int = 0
-    tps1 = time.time()
-    for i in range(iter):
-        if iter > 1:
-            clear()
-            print(f"Avancement : ", end=" ")
-            compteur: int = math.ceil((i / iter) * 100)
-            print("[" + compteur * "-" + ((100 - compteur) * " " + "]"))
-        game = Gopher_Game(size=size, starting_player=starting)
-        game.set_depth(depth)
-        while game.final():
-            if game.get_player() == 1:
-                play: Action = game.strategy_random()
-                game.move(play)
-                game.set_player(player=2)
-            else:
-                play: Action = game.strategy_mcts(mcts_iter)
-                game.move(play)
-                game.set_player(player=1)
-        # on compte le nombre de parties gagnées par le joueur 1
-        if game.get_player() == 1:
-            if game.score() == 1:
-                score += 1
-        else:
-            if game.score() == -1:
-                score += 1
-        print(game)
-        del game
-
-    temps: float = time.time() - tps1
-    print()
-    print(
-        f"Nombre d'itérations : {iter} | Taille de la grille : {size} | pronfondeur : {depth} | joueur de départ : {starting}"
-    )
-    print(f"Temps d'éxécution  : {temps:.4f} secondes")
-    if iter > 1:
-        print(f"Temps par partie  : {temps/iter:.4f} secondes")
-    print(
-        f"Nombre de parties gagnées pour le joueur 1: {score} {(score/iter)*100:.2f}%"
-    )
-    print(
-        f"Nombre de parties gagnées pour le joueur 2: {iter-score} {((iter-score)/iter)*100:.2f}%"
-    )
-
-
-def debug() -> None:
-
-    # bug dans la vérification des coups legits
-    game = Gopher_Game(3, 1)
-    game.move((0,0))
-    game.set_player(2)
-    game.move((-1,0))
-    game.set_player(1)
-    game.get_direction()
-
-    # symétries
-    """
-    game.grid = invert_grid_h(game.grid)
-    print(game)
-    game.grid = invert_grid_v(game.grid)
-    print(game)
-    game.grid = invert_grid_h(game.grid)
-    print(game)
-    game.grid = invert_grid_v(game.grid)
-    print(game)
-    """
-    # rotations
-    # rotate_grid(game.grid)
-
-#debug()
-test(iter=10000, size=4, depth=2,starting=1, mcts_iter=100)
+    def restore_state(self, state: dict) -> None:
+        """Restaure l'état du jeu à partir d'un dictionnaire."""
+        self.__grid = state['grid']
+        self.__current_player = state['current_player']
+        self.__firstmove = state['firstmove']
+        self.__size = state['size']
+        self.__legits = state['legits']
+        self.__played = state['played']
+        self.__starting = state['starting']
+        self.__updated = state['updated']

@@ -6,11 +6,11 @@ from utils import *
 class Node:
     def __init__(self, game, parent: Optional['Node'] = None, action: Optional[Action] = None) -> None:
         self.game = game
-        self.parent : Node = parent
-        self.action : Action = action
+        self.parent: Node = parent
+        self.action: Action = action
         self.children: List['Node'] = []
-        self.visits : int = 0
-        self.wins : int = 0
+        self.visits: int = 0
+        self.wins: int = 0
 
     def add_child(self, child: 'Node') -> None:
         self.children.append(child)
@@ -20,7 +20,7 @@ class Node:
         self.wins += result
 
     def ucb1(self) -> float:
-        coeff_value : float = 2
+        coeff_value: float = 2
         if self.visits == 0:
             return float('inf')
         return self.wins / self.visits + math.sqrt(coeff_value * math.log(self.parent.visits) / self.visits)
@@ -38,19 +38,23 @@ class MCTS:
         game = node.game
         legal_moves = game.get_legits()
         for move in legal_moves:
-            new_game = game.copy()
-            new_game.move(move)
-            new_game.set_player(3 - game.get_player())
-            child = Node(new_game, parent=node, action=move)
-            node.add_child(child)
-
-    def simulation(self, game) -> float:
-        while game.final():
-            legal_moves : list[Cell] = game.get_legits()
-            move : Cell = random.choice(legal_moves)
+            tmp : dict = game.save_state()
             game.move(move)
             game.set_player(3 - game.get_player())
-        return game.score()
+            child = Node(game, parent=node, action=move)
+            node.add_child(child)
+            game.restore_state(tmp)
+
+    def simulation(self, game) -> float:
+        state = game.save_state()
+        while game.final():
+            legal_moves = game.get_legits()
+            move = random.choice(legal_moves)
+            game.move(move)
+            game.set_player(3 - game.get_player())
+        result = game.score()
+        game.restore_state(state)
+        return result
 
     def backpropagation(self, node: Node, result: float) -> None:
         while node:
@@ -66,15 +70,11 @@ class MCTS:
             self.backpropagation(node, result)
 
         if self.root.children:
-            best_child = max(self.root.children, key=lambda child: child.wins / child.visits if child.visits!= 0 else float('-inf'))
+            best_child = max(self.root.children, key=lambda child: child.wins / child.visits if child.visits != 0 else float('-inf'))
             return best_child.action
         else:
             raise ValueError("No children found after MCTS iterations. The game might be already won/lost or no legal moves are available.")
 
-
-
-def mcts(game, iterations: int) -> Action:
+def mcts(game) -> Action:
     mcts_search = MCTS(game)
-    return mcts_search.search(iterations)
-    
-    
+    return mcts_search.search(1000)
