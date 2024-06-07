@@ -3,7 +3,9 @@
 import time
 import copy
 from utils import *
-from mctsv2 import *
+from mcts import *
+from concurrent.futures import ThreadPoolExecutor
+from functools import lru_cache
 
 
 class Gopher_Game:
@@ -253,9 +255,9 @@ class Gopher_Game:
             return True
         return False
 
-    @memoize
+    @lru_cache(maxsize=None)
     def minmax_action(self, depth: int = 0) -> tuple[float, Action]:
-        """Minimax function using evaluate for move evaluation."""
+        """Minimax function with memoization."""
         best: tuple[float, Action] = (None, None)
         self.verif()
 
@@ -270,7 +272,6 @@ class Gopher_Game:
                 self.move(move)
                 self.set_player(2)
                 score, _ = self.minmax_action(depth - 1)
-                # Use evaluate to assess the move
                 move_score = self.evaluate(move)
                 total_score = score + move_score
                 if total_score > best_value:
@@ -286,7 +287,6 @@ class Gopher_Game:
                 self.move(move)
                 self.set_player(1)
                 score, _ = self.minmax_action(depth - 1)
-                # Use evaluate to assess the move
                 move_score = self.evaluate(move)
                 total_score = score + move_score
                 if total_score < best_value:
@@ -297,7 +297,6 @@ class Gopher_Game:
             return best
 
         raise ValueError("Joueur inconnu")
-
 
     def strategy_minmax(self) -> Action:
         """strategy de jeu avec minmax"""
@@ -364,19 +363,52 @@ class Gopher_Game:
         raise ValueError("Joueur inconnu")
 
 
+    def alpha_beta_action_parallel(self, depth: int = 0, alpha: float = float("-inf"), beta: float = float("inf")) -> tuple[float, Action]:
+        """Alpha-beta pruning with parallel processing."""
+        self.verif()
+        best: tuple[float, Action] = (None, None)
+
+        if depth == 0 or not self.__legits:
+            return (self.score(), None)
+
+        def evaluate_move(move):
+            temp_game = self.copy()  # Create a deep copy of the game for each move
+            temp_game.move(move)
+            temp_game.set_player(2 if temp_game.__current_player == 1 else 1)
+            score, _ = temp_game.alpha_beta_action(depth - 1, alpha, beta)
+            move_score = temp_game.evaluate(move)
+            total_score = score + move_score
+            return total_score, move
+
+        with ThreadPoolExecutor() as executor:
+            results = list(executor.map(evaluate_move, self.__legits))
+
+        if self.__current_player == 1:
+            best = max(results, key=lambda x: x[0])
+        else:
+            best = min(results, key=lambda x: x[0])
+
+        return best
+
+
     def strategy_alpha_beta(self) -> Action:
-        """strategy de jeu avec minmax"""
-        length : int = len(self.__played)
-        if self.__firstmove and self.__size%2==1:
-            return (0, 0)
-        elif self.__firstmove and self.__size%2==0:
-            return (0,self.__size-1)
-        elif (length>1 and self.__starting == self.__current_player and self.__size%2==1):
-            length-=1
-            next_cell : Cell = self.get_direction()
-            if next_cell in self.__legits:return next_cell
+        """Strategy de jeu avec alpha-beta"""
+        length: int = len(self.__played)
+        
+        if self.__firstmove:
+            if self.__size % 2 == 1:
+                return (0, 0)
+            else:
+                return (0, self.__size - 1)
+        elif length > 1 and self.__starting == self.__current_player and self.__size % 2 == 1:
+            length -= 1
+            next_cell: Cell = self.get_direction()
+            if next_cell in self.__legits:
+                return next_cell
+        
         value: Action = self.alpha_beta_action(self.__profondeur)[1]
         return value
+
 
     def strategy_mcts(self) -> Action:
         length : int = len(self.__played)
