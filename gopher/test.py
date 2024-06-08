@@ -47,5 +47,10 @@ def test(iter: int, size: int, depth: int,starting : Player) -> None:
         f"Nombre de parties gagnées pour le joueur 2: {iter-score} {((iter-score)/iter)*100:.2f}%"
     )
 
-#debug()
-test(iter=100, size=4,depth=12,starting=1)
+
+
+def debug():
+    print(get_mirror_move((1,0)))
+
+debug()
+#test(iter=100, size=6,depth=9,starting=1)

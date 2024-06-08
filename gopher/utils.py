@@ -144,3 +144,12 @@ def sym_coord_transform(coord: Cell, sym_func) -> Cell:
     if sym_func == invert_grid_v:
         return invert_coord_v(coord)
     return coord
+
+
+
+def get_mirror_move(move: Cell) -> Cell:
+    """Calcule le mouvement miroir par rapport au centre."""
+    x, y = move
+    mirror_x = 2 *  - x
+    mirror_y = 2 *  - y
+    return (mirror_x, mirror_y)
