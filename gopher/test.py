@@ -18,7 +18,7 @@ def test(iter: int, size: int, depth: int,starting : Player) -> None:
                 game.move(play)
                 game.set_player(player=2)
             else:
-                play: Action = game.strategy_negamax()
+                play: Action = game.strategy_mcts()
                 game.move(play)
                 game.set_player(player=1)
         # on compte le nombre de parties gagnées par le joueur 1
@@ -47,10 +47,6 @@ def test(iter: int, size: int, depth: int,starting : Player) -> None:
         f"Nombre de parties gagnées pour le joueur 2: {iter-score} {((iter-score)/iter)*100:.2f}%"
     )
 
+test(iter=100, size=3,depth=12,starting=1)
 
 
-def debug():
-    print(get_mirror_move((1,0)))
-
-debug()
-#test(iter=100, size=6,depth=9,starting=1)

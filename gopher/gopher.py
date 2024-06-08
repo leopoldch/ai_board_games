@@ -3,7 +3,7 @@
 import time
 import copy
 from utils import *
-from mcts import *
+from pers import *
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import lru_cache
 
