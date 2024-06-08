@@ -18,7 +18,7 @@ def test(iter: int, size: int, depth: int,starting : Player) -> None:
                 game.move(play)
                 game.set_player(player=2)
             else:
-                play: Action = game.strategy_mcts()
+                play: Action = game.strategy_negamax()
                 game.move(play)
                 game.set_player(player=1)
         # on compte le nombre de parties gagnées par le joueur 1
@@ -47,6 +47,16 @@ def test(iter: int, size: int, depth: int,starting : Player) -> None:
         f"Nombre de parties gagnées pour le joueur 2: {iter-score} {((iter-score)/iter)*100:.2f}%"
     )
 
-test(iter=100, size=3,depth=12,starting=1)
 
 
+def debug():
+    size = 3 
+    for i in range(7):
+        game = Gopher_Game(size=size+i)
+        print(game)
+        del game
+
+
+test(iter=10, size=5,depth=12,starting=1)
+
+#debug()

@@ -5,7 +5,6 @@ import copy
 from utils import *
 from pers import *
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from functools import lru_cache
 
 
 class Gopher_Game:
@@ -15,7 +14,7 @@ class Gopher_Game:
         if not self.__updated:
             self.legit_moves()
 
-    def __init__(self, size: int, starting_player: Player) -> None:
+    def __init__(self, size: int, starting_player: Player = 1) -> None:
         self.__size = size
         self.__profondeur = 3  # profondeur par défaut
         self.__firstmove = True
@@ -131,54 +130,11 @@ class Gopher_Game:
                     neighbors.append(key)
         return neighbors
 
-    def calculate_strategic_positions(self) -> list[Cell]:
-        """Calculates strategic positions based on the size of the grid."""
-        strategic_positions = []
-        max_distance = self.__size - 1
-        center = (0, 0)
-
-        strategic_positions.append(center)
-
-        adjacent_positions = self.get_neighbors(center[0], center[1])
-        strategic_positions.extend(adjacent_positions)
-
-        for x in range(-max_distance, max_distance + 1):
-            for y in range(-max_distance, max_distance + 1):
-                if (
-                    x == -max_distance
-                    or x == max_distance
-                    or y == -max_distance
-                    or y == max_distance
-                ):
-                    cell = (x, y)
-                    if cell in self.__grid.keys():
-                        strategic_positions.append(cell)
-
-        return strategic_positions
-
-    def is_strategic_position(self, cell: Cell) -> bool:
-        """Check if the cell is in a strategic position."""
-        strategic_positions = self.calculate_strategic_positions()
-        return cell in strategic_positions
-
     def evaluate(self, cell: Cell) -> float:
         """Evaluate the potential of a move."""
-        score = 0
-        self.legit_moves()
-
-        # Check if the move is at the center
-        if cell == (0, 0):
-            score += 5
-
-        # Check if the move is in a strategic position
-        if self.is_strategic_position(cell):
-            score += 3
-
-        # Evaluate potential future moves
-        future_moves = len(self.__legits)
-        score += future_moves
-
-        return score
+        if len(self.__legits) == 0:
+            return -1
+        else: return 1
 
     def is_legit(self, start: Cell) -> bool:
         """returns if move is legit or not"""
@@ -459,6 +415,21 @@ class Gopher_Game:
         value = random.randint(0, len(self.__legits) - 1)
         return self.__legits[value]
 
+    def negamax_depth(self) -> int:
+        """returns appropriate depth for negamax"""
+        n : int  = sum(1 for value in self.__grid.values() if value == 0) # Attention O(n)
+        
+        if 217<n<=269:return 4
+        elif 127<n<=217:return 6
+        elif 91<n<=127:return 7
+        elif 37<n<=91: return 9
+        elif 19<n<=37: return 11
+        else: return 12
+
+        #if self.__size <= 3: return 12
+        #depths : dict[int,int] = {4:11,5:9,6:9,7:7,8:6,9:6,10:4}
+        #return depths[self.__size]
+
     def negamax(self, depth: int, alpha: float, beta: float, player: int) -> float:
         """Négamax avec élagage alpha-beta."""
         self.verif()
@@ -523,7 +494,9 @@ class Gopher_Game:
             next_cell = self.get_direction()
             if next_cell in self.__legits:
                 return next_cell
-        value = self.negamax_action(self.__profondeur)[1]
+        depth : int = self.negamax_depth()
+        print(depth)
+        value = self.negamax_action(depth)[1]
         return value
 
     def update_grid_from_state(self, state: State) -> None:
@@ -592,3 +565,4 @@ class Gopher_Game:
         self.__played = state["played"]
         self.__starting = state["starting"]
         self.__updated = state["updated"]
+

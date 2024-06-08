@@ -1,115 +1,63 @@
 import math
 import random
-from typing import List, Optional
+from collections import defaultdict
 
 class Node:
-    def __init__(self, game, parent: Optional['Node'] = None, action: Optional['Action'] = None) -> None:
-        self.game = game
-        self.parent: Node = parent
-        self.action: Action = action
-        self.children: List['Node'] = []
-        self.visits: int = 0
-        self.wins: float = 0.0
+    def __init__(self, state, parent=None):
+        self.state = state
+        self.parent = parent
+        self.children = []
+        self.visits = 0
+        self.wins = 0
+        self.untried_actions = self.state.get_legits()
 
-    def add_child(self, child: 'Node') -> None:
-        self.children.append(child)
+    def add_child(self, child_state):
+        child_node = Node(child_state, parent=self)
+        self.children.append(child_node)
+        self.untried_actions.remove(child_state.__played[-1])
+        return child_node
 
-    def update(self, result: float):
+    def update(self, result):
         self.visits += 1
         self.wins += result
 
-    def ucb1(self) -> float:
-        coeff_value: float = 3
-        if self.visits == 0:
-            return float('inf')
-        return self.wins / self.visits + coeff_value * (math.sqrt(2 * math.log(self.parent.visits) / self.visits))
+    def fully_expanded(self):
+        return len(self.untried_actions) == 0
 
-class MCTS:
-    def __init__(self, root_game) -> None:
-        self.root = Node(root_game)
-        self.simulation_results = {}
+    def best_child(self, exploration_weight=1.41):
+        choices_weights = [
+            (child.wins / child.visits) + exploration_weight * math.sqrt((2 * math.log(self.visits) / child.visits))
+            for child in self.children
+        ]
+        return self.children[choices_weights.index(max(choices_weights))]
 
-    def selection(self, node: Node) -> Node:
-        while node.children:
-            node = max(node.children, key=lambda child: child.ucb1())
-        return node
+def mcts(game, iterations=1000):
+    root = Node(game.copy())
 
-    def expansion(self, node: Node) -> None:
-        game = node.game
-        legal_moves = game.get_legits()
-        for move in legal_moves:
-            tmp = game.save_state()
-            game.move(move)
-            game.set_player(3 - game.get_player())
-            child = Node(game, parent=node, action=move)
-            node.add_child(child)
-            game.restore_state(tmp)
+    for _ in range(iterations):
+        node = root
+        game_state = game.copy()
 
-    def negamax(self, game, depth: int, alpha: float, beta: float, player: int) -> float:
-        if depth == 0 or game.final():
-            return self.evaluate_negamax(game, player)
+        # Selection
+        while node.fully_expanded() and node.children:
+            node = node.best_child()
+            game_state.move(node.state.__played[-1])
 
-        max_eval = float("-inf")
-        legal_moves = game.get_legits()
-        original_grid = game.save_state()
+        # Expansion
+        if node.untried_actions:
+            move = random.choice(node.untried_actions)
+            game_state.move(move)
+            node = node.add_child(game_state.copy())
 
-        for move in legal_moves:
-            game.move(move)
-            game.set_player(3 - game.get_player())
-            eval = -self.negamax(game, depth - 1, -beta, -alpha, 3 - player)
-            game.restore_state(original_grid)
-            game.set_player(player)
-            max_eval = max(max_eval, eval)
-            alpha = max(alpha, eval)
-            if alpha >= beta:
-                break
+        # Simulation
+        while not game_state.final():
+            move = random.choice(game_state.get_legits())
+            game_state.move(move)
 
-        return max_eval
-
-    def evaluate_negamax(self, game, player: int) -> float:
-        """Fonction d'évaluation pour le Négamax."""
-        return game.score() if game.get_player() == player else -game.score()
-
-    def simulation(self, game) -> float:
-        state = game.save_state()
-        state_key = self.get_state_key(state)
-
-        if state_key in self.simulation_results:
-            return self.simulation_results[state_key]
-
-        depth = 4  
-        result = self.negamax(game, depth=depth, alpha=-float('inf'), beta=float('inf'), player=game.get_player())
-        game.restore_state(state)
-
-        self.simulation_results[state_key] = result
-        return result
-
-    def backpropagation(self, node: Node, result: float) -> None:
+        # Backpropagation
+        result = game_state.score()
         while node:
             node.update(result)
             node = node.parent
 
-    def search(self, iterations: int) -> 'Action':
-        for _ in range(iterations):
-            node = self.selection(self.root)
-            if node.game.final():
-                self.expansion(node)
-            else:
-                if not node.children:
-                    self.expansion(node)
-                result = self.simulation(node.game)
-                self.backpropagation(node, result)
-
-        if self.root.children:
-            best_child = max(self.root.children, key=lambda child: child.wins / child.visits if child.visits != 0 else float('-inf'))
-            return best_child.action
-        else:
-            raise ValueError("No children found after MCTS iterations. The game might be already won/lost or no legal moves are available.")
-
-    def get_state_key(self, state) -> str:
-        """Generate a unique key for the game state."""
-        return str(state)  
-
-def mcts(game) -> 'Action':
-    mcts_search = MCTS(game)
-    return mcts_search.search(1000)
+    return root.best_child(0).state.__played[-1]
