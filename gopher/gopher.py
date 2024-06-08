@@ -25,6 +25,7 @@ class Gopher_Game:
         self.__legits: list[Cell] = []
         self.__played = []
         self.__starting = starting_player
+        self.transposition_table = {}
 
     def set_player(self, player: Player):
         if player not in [1, 2]:
@@ -431,15 +432,20 @@ class Gopher_Game:
         #return depths[self.__size]
 
     def negamax(self, depth: int, alpha: float, beta: float, player: int) -> float:
-        """Négamax avec élagage alpha-beta."""
+        """Négamax avec élagage alpha-beta et table de transposition."""
         self.verif()
+        state = self.get_state_negamax()
+        if state in self.transposition_table and self.transposition_table[state]['depth'] >= depth:
+            return self.transposition_table[state]['value']
+
         if depth == 0 or not self.__legits:
             return self.evaluate_negamax(player)
 
         max_eval = float("-inf")
         original_grid = self.__grid.copy()
+        ordered_moves = sorted(self.__legits, key=self.evaluate, reverse=True)  # Tri heuristique
 
-        for move in self.__legits:
+        for move in ordered_moves:
             self.move(move)
             self.set_player(3 - self.__current_player)
             eval = -self.negamax(depth - 1, -beta, -alpha, 3 - player)
@@ -448,13 +454,11 @@ class Gopher_Game:
             max_eval = max(max_eval, eval)
             alpha = max(alpha, eval)
             if alpha >= beta:
-                break
+                break  
 
+        self.transposition_table[state] = {'value': max_eval, 'depth': depth}
         return max_eval
 
-    def evaluate_negamax(self, player: int) -> float:
-        """Fonction d'évaluation pour le Négamax."""
-        return self.score() if self.__current_player == player else -self.score()
 
     def negamax_action(self, depth: int = 3) -> tuple[float, Cell]:
         """Trouve le meilleur mouvement en utilisant Négamax."""
@@ -465,8 +469,9 @@ class Gopher_Game:
 
         original_grid = self.__grid.copy()
         player = self.__current_player
+        ordered_moves = sorted(self.__legits, key=self.evaluate, reverse=True)  # Heuristic sorting
 
-        for move in self.__legits:
+        for move in ordered_moves:
             self.move(move)
             self.set_player(3 - self.__current_player)
             eval = -self.negamax(depth - 1, -beta, -alpha, 3 - player)
@@ -477,6 +482,10 @@ class Gopher_Game:
                 best_move = move
 
         return max_eval, best_move
+
+    def evaluate_negamax(self, player: int) -> float:
+        """Fonction d'évaluation pour le Négamax."""
+        return self.score() if self.__current_player == player else -self.score()
 
     def strategy_negamax(self) -> Cell:
         """Stratégie de jeu utilisant Négamax."""
@@ -495,7 +504,8 @@ class Gopher_Game:
             if next_cell in self.__legits:
                 return next_cell
         depth : int = self.negamax_depth()
-        print(depth)
+        #print(depth)
+        #print(len(self.transposition_table))
         value = self.negamax_action(depth)[1]
         return value
 
@@ -566,3 +576,5 @@ class Gopher_Game:
         self.__starting = state["starting"]
         self.__updated = state["updated"]
 
+    def get_state_negamax(self) -> tuple:
+        return tuple(sorted(self.__grid.items()))

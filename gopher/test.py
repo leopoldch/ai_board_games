@@ -14,11 +14,11 @@ def test(iter: int, size: int, depth: int,starting : Player) -> None:
         while game.final():
             #print(game)
             if game.get_player() == 1:
-                play: Action = game.strategy_random()
+                play: Action = game.strategy_negamax()
                 game.move(play)
                 game.set_player(player=2)
             else:
-                play: Action = game.strategy_negamax()
+                play: Action = game.strategy_alpha_beta()
                 game.move(play)
                 game.set_player(player=1)
         # on compte le nombre de parties gagnées par le joueur 1
@@ -57,6 +57,6 @@ def debug():
         del game
 
 
-test(iter=10, size=5,depth=12,starting=1)
+test(iter=100, size=4,depth=6,starting=2)
 
 #debug()
