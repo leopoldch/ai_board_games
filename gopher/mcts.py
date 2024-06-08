@@ -1,83 +1,63 @@
 import math
 import random
-from typing import List, Optional
+from gopher import Gopher_Game
 from utils import *
 
 class Node:
-    def __init__(self, game, parent: Optional['Node'] = None, action: Optional[Action] = None) -> None:
-        self.game = game
-        self.parent: Node = parent
-        self.action: Action = action
-        self.children: List['Node'] = []
-        self.visits: int = 0
-        self.wins: int = 0
+    def __init__(self, state, parent=None):
+        self.state = state
+        self.parent = parent
+        self.children = []
+        self.wins = 0
+        self.visits = 0
+        self.untried_moves = state.get_legits().copy()
 
-    def add_child(self, child: 'Node') -> None:
-        self.children.append(child)
+    def is_fully_expanded(self):
+        return len(self.untried_moves) == 0
 
-    def update(self, result: float) -> None:
-        self.visits += 1
-        self.wins += result
-
-    def ucb1(self) -> float:
-        coeff_value: float = 2
-        if self.visits == 0:
-            return float('inf')
-        return self.wins / self.visits + math.sqrt(coeff_value * math.log(self.parent.visits) / self.visits)
-
+    def best_child(self, exploration_weight=1.4):
+        choices_weights = [
+            (child.wins / child.visits) + exploration_weight * math.sqrt((2 * math.log(self.visits) / child.visits))
+            for child in self.children
+        ]
+        return self.children[choices_weights.index(max(choices_weights))]
 
 class MCTS:
-    def __init__(self, root_game, iterations: int = 1000) -> None:
-        self.root = Node(root_game)
+    def __init__(self, iterations=1000):
         self.iterations = iterations
 
-    def search(self) -> Action:
+    def search(self, initial_state):
+        root = Node(initial_state)
+
         for _ in range(self.iterations):
-            node = self.selection(self.root)
-            if not node.game.final():
-                self.expansion(node)
-            result = self.simulation(node.game)
-            self.backpropagation(node, result)
+            node = root
+            state = initial_state.copy()
 
-        if self.root.children:
-            best_child = max(self.root.children, key=lambda child: child.visits)
-            return best_child.action
-        else:
-            raise ValueError("No children found after MCTS iterations.")
+            # Selection
+            while node.is_fully_expanded() and node.children:
+                node = node.best_child()
+                state.move(node.state.__played[-1])
 
-    def selection(self, node: Node) -> Node:
-        while node.children:
-            node = max(node.children, key=lambda child: child.ucb1())
-        return node
+            # Expansion
+            if node.untried_moves:
+                move = node.untried_moves.pop()
+                state.move(move)
+                new_node = Node(state.copy(), node)
+                node.children.append(new_node)
+                node = new_node
 
-    def expansion(self, node: Node) -> None:
-        game = node.game
-        legal_moves = game.get_legits()
-        if not legal_moves:  # Vérification si aucun mouvement légal n'est disponible
-            return
-        for move in legal_moves:
-            new_game = game.copy()  # Copie légère de l'état du jeu
-            new_game.move(move)
-            new_game.set_player(3 - game.get_player())
-            child = Node(new_game, parent=node, action=move)
-            node.add_child(child)
+            # Simulation
+            while not state.final():
+                move = random.choice(state.get_legits())
+                state.move(move)
 
-    def simulation(self, game) -> float:
-        while not game.final():  # Correction de la condition
-            legal_moves: list[Cell] = game.get_legits()
-            if not legal_moves:  # Pas de mouvements légaux disponibles
-                break
-            move: Cell = random.choice(legal_moves)
-            game.move(move)
-            game.set_player(3 - game.get_player())
-        return game.score()
+            # Backpropagation
+            result = state.score()
+            while node is not None:
+                node.visits += 1
+                if state.get_player() == result:
+                    node.wins += 1
+                node = node.parent
 
-    def backpropagation(self, node: Node, result: float) -> None:
-        while node:
-            node.update(result)
-            node = node.parent
+        return max(root.children, key=lambda c: c.visits).state.__played[-1]
 
-
-def mcts(game) -> Action:
-    mcts_search = MCTS(game)
-    return mcts_search.search()

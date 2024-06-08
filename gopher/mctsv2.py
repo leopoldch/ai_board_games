@@ -23,7 +23,7 @@ class Node:
         coeff_value: float = 2
         if self.visits == 0:
             return float('inf')
-        return self.wins / self.visits + math.sqrt(coeff_value * math.log(self.parent.visits) / self.visits)
+        return self.wins / self.visits + coeff_value * (math.sqrt(2 * math.log(self.parent.visits) / self.visits))
 
 class MCTS:
     def __init__(self, root_game) -> None:
