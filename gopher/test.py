@@ -15,7 +15,7 @@ def test(iter: int, size: int, depth: int,starting : Player) -> None:
         while game.final():
             #print(game)
             if game.get_player() == 1:
-                play: Action = game.strategy_minmax()
+                play: Action = game.strategy_negamax()
                 game.make_move(play)
                 game.set_player(player=2)
             else:

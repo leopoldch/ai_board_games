@@ -22,24 +22,19 @@ class GopherGame:
 
     # --- FONCTIONS UTILITAIRES POUR LE FONCTIONNEMENT DU JEU ---
 
-    def __verify_update(self) -> None:
-        """vérifier si les coups légits ont été mis à jour"""
-        if not self.__updated:
-            self.__legit_moves()
-
     def __init__(self, size: int, starting_player: Player = 1) -> None:
         """constructeur de Gopher"""
-        self.__size = size
-        self.__profondeur = 3  # profondeur par défaut
-        self.__firstmove = True
-        self.__current_player = starting_player
+        self.__size: int = size
+        self.__profondeur: int = 3  # profondeur par défaut
+        self.__firstmove: bool = True
+        self.__current_player: Player = starting_player
         self.__grid: Grid
         self.__create_board()
-        self.__updated = False
+        self.__updated: bool = False
         self.__legits: list[Cell] = []
-        self.__played = []
-        self.__starting = starting_player
-        self.transposition_table = {}
+        self.__played: list[Cell] = []
+        self.__starting: Player = starting_player
+        self.transposition_table: dict = {}
 
     def __create_board(self) -> None:
         """create board using a size"""
@@ -101,6 +96,11 @@ class GopherGame:
 
         return returned_str
 
+    def __verify_update(self) -> None:
+        """vérifier si les coups légits ont été mis à jour"""
+        if not self.__updated:
+            self.__legit_moves()
+
     def __get_neighbors(self, x: int, y: int) -> list[Cell]:
         """récupérer les voisins"""
         max_val = self.__size - 1
@@ -115,7 +115,7 @@ class GopherGame:
                     neighbors.append(key)
         return neighbors
 
-    def __evaluate(self, cell: Cell) -> float:
+    def __evaluate(self, _) -> float:
         """Evaluate the potential of a move."""
         score = 0
         self.__legit_moves()
@@ -357,18 +357,16 @@ class GopherGame:
 
         original_grid = self.__grid.copy()
         player = self.__current_player
-        ordered_moves = sorted(
-            self.__legits, key=self.__evaluate, reverse=True
-        )  # Heuristic sorting
+        ordered_moves = sorted(self.__legits, key=self.__evaluate, reverse=True)
 
         for move in ordered_moves:
             self.make_move(move)
             self.set_player(3 - self.__current_player)
-            eval = -self.__negamax(depth - 1, -beta, -alpha, 3 - player)
+            eval_value = -self.__negamax(depth - 1, -beta, -alpha, 3 - player)
             self.__grid = original_grid.copy()
             self.set_player(player)
-            if eval > max_eval:
-                max_eval = eval
+            if eval_value > max_eval:
+                max_eval = eval_value
                 best_move = move
 
         return max_eval, best_move
