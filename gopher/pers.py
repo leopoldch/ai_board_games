@@ -26,7 +26,8 @@ class Node:
 
     def best_child(self, exploration_weight=1.41):
         choices_weights = [
-            (child.wins / child.visits) + exploration_weight * math.sqrt((2 * math.log(self.visits) / child.visits))
+            (child.wins / child.visits)
+            + exploration_weight * math.sqrt((2 * math.log(self.visits) / child.visits))
             for child in self.children
         ]
         return self.children[choices_weights.index(max(choices_weights))]

@@ -1,4 +1,5 @@
 from gopher import *
+import time
 
 def test(iter: int, size: int, depth: int,starting : Player) -> None:
     score: int = 0
@@ -9,17 +10,17 @@ def test(iter: int, size: int, depth: int,starting : Player) -> None:
             print(f"Avancement : ", end=" ")
             compteur: int = math.ceil((i / iter) * 100)
             print("[" + compteur * "-" + ((100 - compteur) * " " + "]"))
-        game = Gopher_Game(size=size, starting_player=starting)
+        game = GopherGame(size=size, starting_player=starting)
         game.set_depth(depth)
         while game.final():
             #print(game)
             if game.get_player() == 1:
-                play: Action = game.strategy_negamax()
-                game.move(play)
+                play: Action = game.strategy_minmax()
+                game.make_move(play)
                 game.set_player(player=2)
             else:
-                play: Action = game.strategy_alpha_beta()
-                game.move(play)
+                play: Action = game.strategy_random()
+                game.make_move(play)
                 game.set_player(player=1)
         # on compte le nombre de parties gagnées par le joueur 1
         if game.get_player() == 1:
@@ -52,11 +53,11 @@ def test(iter: int, size: int, depth: int,starting : Player) -> None:
 def debug():
     size = 3 
     for i in range(7):
-        game = Gopher_Game(size=size+i)
+        game = GopherGame(size=size+i)
         print(game)
         del game
 
 
-test(iter=100, size=4,depth=6,starting=2)
+test(iter=1, size=4,depth=6,starting=1)
 
 #debug()
