@@ -2,6 +2,7 @@
 
 import math
 import random
+from typing import Union
 from utils import (
     Action,
     str_blue,
@@ -25,10 +26,9 @@ class GopherGame:
     def __init__(self, size: int, starting_player: Player = 1) -> None:
         """constructeur de Gopher"""
         self.__size: int = size
-        self.__profondeur: int = 3  # profondeur par défaut
         self.__firstmove: bool = True
         self.__current_player: Player = starting_player
-        self.__grid: Grid
+        self.__grid: Grid = {}
         self.__create_board()
         self.__updated: bool = False
         self.__legits: list[Cell] = []
@@ -39,12 +39,11 @@ class GopherGame:
     def __create_board(self) -> None:
         """create board using a size"""
         sizet = self.__size * 2 - 1
-
-        self.__grid: dict[Cell:Player] = {}
         counter: int = math.ceil(sizet / 2)
         start = [0, math.floor(sizet / 2)]
         verif: bool = True
         iterations: int = sizet
+        cell: Cell
         if sizet % 2 == 0:
             iterations += 1
         for _ in range(iterations):
@@ -52,13 +51,13 @@ class GopherGame:
                 verif = False
             if verif:
                 for i in range(counter):
-                    cell: Cell = (start[0] + i, start[1])
+                    cell = (start[0] + i, start[1])
                     self.__grid[cell] = 0
                 counter += 1
                 start = [start[0] - 1, start[1] - 1]
             else:
                 for i in range(counter):
-                    cell: Cell = (start[0] + i, start[1])
+                    cell = (start[0] + i, start[1])
                     self.__grid[cell] = 0
                 counter -= 1
                 start = [start[0], start[1] - 1]
@@ -197,9 +196,9 @@ class GopherGame:
     # ----------------------- ALGO MIN-MAX -----------------------
 
     @memoize
-    def __minmax_action(self, depth: int = 0) -> tuple[float, Action]:
+    def __minmax_action(self, depth: int = 0) -> tuple[float, Union[Action, None]]:
         """Minimax function with memoization."""
-        best: tuple[float, Action] = (None, None)
+        best: tuple[float, Action]
         self.__verify_update()
 
         if depth == 0 or not self.__legits:
@@ -246,10 +245,10 @@ class GopherGame:
     ) -> tuple[float, Action]:
         """Alpha-beta pruning function using evaluate for move evaluation."""
         self.__verify_update()
-        best: tuple[float, Action] = (None, None)
+        best: tuple[float, Action]
 
         if depth == 0 or not self.__legits:
-            return (self.score(), None)
+            return (self.score(), (-100,-100)) # on admet qu'il n'y a pas de case (-100,-100) dans une grille
 
         original_grid = self.__grid.copy()  # Faire une copie de la grille initiale
 
@@ -350,7 +349,7 @@ class GopherGame:
 
     def __negamax_action(self, depth: int = 3) -> tuple[float, Cell]:
         """Trouve le meilleur mouvement en utilisant Négamax."""
-        best_move = None
+        best_move: tuple[int, int]
         max_eval = float("-inf")
         alpha = float("-inf")
         beta = float("inf")
@@ -425,7 +424,7 @@ class GopherGame:
             next_cell: Cell = self.get_direction()
             if next_cell in self.__legits:
                 return next_cell
-        value: Action = self.__minmax_action(self.__profondeur)[1]
+        value: Action = self.__minmax_action(3)[1]
         return value
 
     def strategy_mcts(self) -> Action:
@@ -464,7 +463,7 @@ class GopherGame:
             if next_cell in self.__legits:
                 return next_cell
 
-        value: Action = self.__alpha_beta_action(self.__profondeur)[1]
+        value: Action = self.__alpha_beta_action(3)[1]
         return value
 
     # ---------------- GETTER ET SETTERS PUBLICS ----------------
@@ -484,12 +483,6 @@ class GopherGame:
     def set_grid(self, newgrid: Grid) -> None:
         """setter de la grid"""
         self.__grid = newgrid
-
-    def set_depth(self, depth: int) -> None:
-        """mettre à jour une profondeur pour l'ensemble du programme"""
-        if depth <= 0:
-            raise ValueError("Profondeur incorrecte")
-        self.__profondeur = depth
 
     def get_player(self) -> Player:
         """getter pour l'attribut joueur actuel"""
@@ -511,7 +504,7 @@ class GopherGame:
         last: Cell = self.__played[-1]
         value = self.__grid[last]
         verif = 0
-        aligned = None
+        aligned: tuple[int, int]
         for tup in self.__get_neighbors(last[0], last[1]):
             if self.__grid[tup] == 3 - value:
                 # un seul résultat
@@ -519,6 +512,7 @@ class GopherGame:
                 aligned = tup
         if verif > 1 or verif == 0:
             raise ValueError("Incohérence dans le jeu")
+
         dx: int = last[0] - aligned[0]
         dy: int = last[1] - aligned[1]
         next_cell = (last[0] + dx, last[1] + dy)

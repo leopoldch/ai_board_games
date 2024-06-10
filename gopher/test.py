@@ -1,7 +1,7 @@
 from gopher import *
 import time
 
-def test(iter: int, size: int, depth: int,starting : Player) -> None:
+def test(iter: int, size: int,starting : Player) -> None:
     score: int = 0
     tps1 = time.time()
     for i in range(iter):
@@ -11,11 +11,10 @@ def test(iter: int, size: int, depth: int,starting : Player) -> None:
             compteur: int = math.ceil((i / iter) * 100)
             print("[" + compteur * "-" + ((100 - compteur) * " " + "]"))
         game = GopherGame(size=size, starting_player=starting)
-        game.set_depth(depth)
         while game.final():
             #print(game)
             if game.get_player() == 1:
-                play: Action = game.strategy_negamax()
+                play: Action = game.strategy_alpha_beta()
                 game.make_move(play)
                 game.set_player(player=2)
             else:
@@ -36,7 +35,7 @@ def test(iter: int, size: int, depth: int,starting : Player) -> None:
     temps: float = time.time() - tps1
     print()
     print(
-        f"Nombre d'itérations : {iter} | Taille de la grille : {size} | pronfondeur : {depth} | joueur de départ : {starting}"
+        f"Nombre d'itérations : {iter} | Taille de la grille : {size} | joueur de départ : {starting}"
     )
     print(f"Temps d'éxécution  : {temps:.4f} secondes")
     if iter > 1:
@@ -58,6 +57,6 @@ def debug():
         del game
 
 
-test(iter=1, size=4,depth=6,starting=1)
+test(iter=1, size=6,starting=1)
 
 #debug()
