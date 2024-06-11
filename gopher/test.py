@@ -8,7 +8,6 @@ from utils import (
     Player,
 )
 
-
 def test(iterations: int, size: int, starting: Player) -> None:
     """fonction de test"""
     score: int = 0
@@ -21,7 +20,7 @@ def test(iterations: int, size: int, starting: Player) -> None:
             print("[" + compteur * "-" + ((100 - compteur) * " " + "]"))
         game = GopherGame(size=size, starting_player=starting)
         while game.final():
-            print(game)
+            #print(game)
             if game.get_player() == 1:
                 play: Action = game.strategy_random()
                 game.make_move(play)
@@ -54,7 +53,6 @@ def test(iterations: int, size: int, starting: Player) -> None:
         f"Nb de win pour le joueur 2: {iterations-score} {((iterations-score)/iterations)*100:.2f}%"
     )
 
-
 def debug():
     """fonction de debug"""
     size = 3
@@ -63,7 +61,6 @@ def debug():
         print(game)
         del game
 
-
-test(iterations=10, size=6, starting=1)
+test(iterations=10, size=6, starting=2)
 
 # debug()
