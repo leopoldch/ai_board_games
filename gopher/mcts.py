@@ -67,7 +67,7 @@ class MCTS:
         legal_moves = game.get_legits()
         for move in legal_moves:
             tmp: dict = game.save_state()
-            game.move(move)
+            game.make_move(move)
             game.set_player(3 - game.get_player())
             child = Node(game, parent=node, action=move)
             node.add_child(child)
@@ -79,7 +79,7 @@ class MCTS:
         while game.final():
             legal_moves = game.get_legits()
             move = random.choice(legal_moves)
-            game.move(move)
+            game.make_move(move)
             game.set_player(3 - game.get_player())
         result = game.score()
         game.restore_state(state)

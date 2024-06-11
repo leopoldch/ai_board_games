@@ -15,7 +15,7 @@ from utils import (
     State,
     Grid,
 )
-from pers import mcts
+from mcts import mcts
 
 
 class GopherGame:
@@ -530,3 +530,13 @@ class GopherGame:
             "starting": self.__starting,
             "updated": self.__updated,
         }
+    
+    def restore_state(self, state : dict) -> None:
+        self.__grid = state['grid']
+        self.__current_player = state['current_player']
+        self.__firstmove = state['firstmove']
+        self.__size = state['size']
+        self.__legits = state['legits']
+        self.__played = state['played']
+        self.__starting = state['starting']
+        self.__updated = state['updated']
