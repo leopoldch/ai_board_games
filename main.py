@@ -32,6 +32,7 @@ def strategy_brain(env: Environment, state: State, player: Player, time_left: Ti
 
 def final_result(state: State, score: Score, player: Player):
     print(f"Ending: {player} wins with a score of {score}")
+    
 
 
 if __name__ == "__main__":

@@ -28,6 +28,7 @@ def strategy_gopher(env: Environment, state: State, player: Player,time_left: Ti
     game : GopherGame = GopherGame(size=size, starting_player=starting_player)
     game.restore_env(state,env, player)
     action :  ActionGopher = game.strategy_negamax()
+    #print(action)
     game.make_move(action)
     new_env : Environment = game.to_environnement()
     return (new_env,action)
