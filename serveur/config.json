@@ -1,0 +1,13 @@
+{
+    "MatchMakingStrategy": "fifo",
+    "StartingPlayer": "red",
+    "GameTime": 1000,
+    "BackupFilename": "server.json",
+    "ServerAddr": ":8080",
+    "GridPossibleSizes": [
+        4,
+        5,
+        6,
+        7
+    ]
+}

@@ -3,7 +3,7 @@
 import math
 import random
 from typing import Union
-from utils import (
+from gopher.utils import (
     Action,
     str_blue,
     str_red,
@@ -15,7 +15,9 @@ from utils import (
     State,
     Grid,
 )
-from mcts import mcts
+from gopher.mcts import mcts
+
+Environment = dict
 
 
 class GopherGame:
@@ -23,7 +25,7 @@ class GopherGame:
 
     # --- FONCTIONS UTILITAIRES POUR LE FONCTIONNEMENT DU JEU ---
 
-    def __init__(self, size: int, starting_player: Player = 1) -> None:
+    def __init__(self, size: int, starting_player: Player ) -> None:
         """constructeur de Gopher"""
         self.__size: int = size
         self.__firstmove: bool = True
@@ -34,7 +36,6 @@ class GopherGame:
         self.__legits: list[Cell] = []
         self.__played: list[Cell] = []
         self.__starting: Player = starting_player
-        self.transposition_table: dict = {}
 
     def __create_board(self) -> None:
         """create board using a size"""
@@ -97,6 +98,9 @@ class GopherGame:
 
     def __verify_update(self) -> None:
         """vérifier si les coups légits ont été mis à jour"""
+        if len(self.__played)>0:
+            self.__firstmove = False
+            self.__legits = []
         if not self.__updated:
             self.__legit_moves()
 
@@ -177,6 +181,17 @@ class GopherGame:
         self.__legits = []
         self.__played.append(cell)
 
+    def unmake_move(self, cell: Cell) -> None:
+        """unplay item on grid"""
+        if cell not in self.__played:
+            raise ValueError("Pion pas joué")
+        self.__grid[cell] = 0
+        self.__updated = False
+        self.__legits = []
+        self.__played.remove(cell)
+        if len(self.__played) == 0:
+            self.__firstmove = True
+
     def score(self) -> float:
         """evaluation func"""
         self.__verify_update()
@@ -185,6 +200,15 @@ class GopherGame:
         if self.__legits:
             return 1
         return -1
+
+    def score_variant(self) -> int:
+        """autre fonction de scoring"""
+        score = self.score()
+        if score == 1:
+            return 10 if self.get_player() == 1 else -10
+        elif score == -1:
+            return -10 if self.get_player() == 1 else 10
+        return 0
 
     def final(self) -> bool:
         """returns if game has ended"""
@@ -195,7 +219,7 @@ class GopherGame:
 
     # ----------------------- ALGO MIN-MAX -----------------------
 
-    @memoize
+    #@memoize ralenti 
     def __minmax_action(self, depth: int = 0) -> tuple[float, Union[Action, None]]:
         """Minimax function with memoization."""
         best: tuple[float, Action]
@@ -248,7 +272,10 @@ class GopherGame:
         best: tuple[float, Action]
 
         if depth == 0 or not self.__legits:
-            return (self.score(), (-100,-100)) # on admet qu'il n'y a pas de case (-100,-100) dans une grille
+            return (
+                self.score(),
+                (-100, -100),
+            )  # on admet qu'il n'y a pas de case (-100,-100) dans une grille
 
         original_grid = self.__grid.copy()  # Faire une copie de la grille initiale
 
@@ -297,18 +324,18 @@ class GopherGame:
         n: int = sum(
             1 for value in self.__grid.values() if value == 0
         )  # Attention O(n)
-
+        value = 3
         if 217 < n <= 269:
-            return 4
+            value= 4
         if 127 < n <= 217:
-            return 6
+            value = 7
         if 91 < n <= 127:
-            return 7
+            value = 7
         if 37 < n <= 91:
-            return 9
+            value = 10
         if 19 < n <= 37:
-            return 11
-        return 12
+            value = 11
+        return value
 
         # if self.__size <= 3: return 12
         # depths : dict[int,int] = {4:11,5:9,6:9,7:7,8:6,9:6,10:4}
@@ -318,11 +345,6 @@ class GopherGame:
         """Négamax avec élagage alpha-beta et table de transposition."""
         self.__verify_update()
         state = self.__get_state_negamax()
-        if (
-            state in self.transposition_table
-            and self.transposition_table[state]["depth"] >= depth
-        ):
-            return self.transposition_table[state]["value"]
 
         if depth == 0 or not self.__legits:
             return self.__evaluate_negamax(player)
@@ -343,8 +365,6 @@ class GopherGame:
             alpha = max(alpha, eval_value)
             if alpha >= beta:
                 break
-
-        self.transposition_table[state] = {"value": max_eval, "depth": depth}
         return max_eval
 
     def __negamax_action(self, depth: int = 3) -> tuple[float, Cell]:
@@ -357,7 +377,6 @@ class GopherGame:
         original_grid = self.__grid.copy()
         player = self.__current_player
         ordered_moves = sorted(self.__legits, key=self.__evaluate, reverse=True)
-
         for move in ordered_moves:
             self.make_move(move)
             self.set_player(3 - self.__current_player)
@@ -397,14 +416,14 @@ class GopherGame:
             if next_cell in self.__legits:
                 return next_cell
         depth: int = self.__negamax_depth()
-        # print(depth)
-        # print(len(self.transposition_table))
         value = self.__negamax_action(depth)[1]
         return value
 
     def strategy_random(self) -> Action:
         """function to play with a random strat"""
         self.__verify_update()
+        if len(self.__legits) == 0:
+            raise ValueError("Attention plus d'action possibles")
         value = random.randint(0, len(self.__legits) - 1)
         return self.__legits[value]
 
@@ -499,6 +518,10 @@ class GopherGame:
         self.__verify_update()
         return self.__legits
 
+    def get_played(self) -> list[Cell]:
+        """retourne les coups joués"""
+        return self.__played
+
     def get_direction(self) -> Cell:
         """fonction pour avoir la direction en cas de grille impair"""
         last: Cell = self.__played[-1]
@@ -530,13 +553,45 @@ class GopherGame:
             "starting": self.__starting,
             "updated": self.__updated,
         }
-    
-    def restore_state(self, state : dict) -> None:
-        self.__grid = state['grid']
-        self.__current_player = state['current_player']
-        self.__firstmove = state['firstmove']
-        self.__size = state['size']
-        self.__legits = state['legits']
-        self.__played = state['played']
-        self.__starting = state['starting']
-        self.__updated = state['updated']
+        
+    def restore_state(self, state: dict) -> None:
+        """Permet de remettres des attributs utile dans MCTS"""
+        self.__grid = state["grid"]
+        self.__current_player = state["current_player"]
+        self.__firstmove = state["firstmove"]
+        self.__size = state["size"]
+        self.__legits = state["legits"]
+        self.__played = state["played"]
+        self.__starting = state["starting"]
+        self.__updated = state["updated"]        
+
+    def to_environnement(self) -> dict:
+        """Sauvegarde l'état actuel du jeu sous forme de dictionnaire."""
+        return {
+            "grid": self.__grid.copy(),
+            "current_player" : self.__current_player,
+            "firstmove": self.__firstmove,
+            "size": self.__size,
+            "legits": self.__legits,
+            "played": self.__played,
+            "starting": self.__starting,
+            "updated": False,
+            "game" : 'gopher',
+        }
+
+    def restore_env(self, state : State, env : Environment, current : Player) -> None:
+        """permet de restaurer le jeu à partir de l'environnement"""   
+        
+        self.restore_state(env) # attention on restaure avec l'ancienne grille volontairement
+        opponent : Player = 3 - current
+        self.__current_player = current
+        self.__updated = False
+        new_grid : Grid = state_to_grid(state)
+        if new_grid == self.__grid:
+            for key, item in new_grid.items():
+                if self.__grid[key] == 0 and item == opponent: # on a trouvé le dernier coup
+                    self.__played.append(key)
+        self.__grid = new_grid
+        self.__verify_update()
+        if len(self.__played)==1:self.__starting=opponent
+        

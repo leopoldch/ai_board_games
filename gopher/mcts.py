@@ -13,13 +13,17 @@ Player = int
 State = list[tuple[Cell, Player]]
 Score = int
 Time = int
-Grid = dict[Cell,Player]
+Grid = dict[Cell, Player]
+
 
 class Node:
     """noeud de l'arbre MCTS"""
 
     def __init__(
-        self, game, parent: Optional["Node"] = None, action: Optional[ActionGopher] = None
+        self,
+        game,
+        parent: Optional["Node"] = None,
+        action: Optional[ActionGopher] = None,
     ) -> None:
         """constructeur du noeud"""
         self.game = game
@@ -108,9 +112,7 @@ class MCTS:
                 ),
             )
             return best_child.action
-        raise ValueError(
-                "No children found after MCTS iterations."
-            )
+        raise ValueError("No children found after MCTS iterations.")
 
 
 def mcts(game) -> ActionGopher:

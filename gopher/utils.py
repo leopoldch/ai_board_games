@@ -13,7 +13,7 @@ Player = int
 State = list[tuple[Cell, Player]]
 Score = int
 Time = int
-Grid = dict[Cell,Player]
+Grid = dict[Cell, Player]
 
 # Utilitary functions :
 
@@ -53,7 +53,7 @@ def grid_to_state(grid: Grid) -> State:
 
 
 def memoize(func):
-    """memoize function (cache) """
+    """memoize function (cache)"""
     cache = {}
 
     def memoized_func(self, depth=3):
@@ -125,7 +125,7 @@ def invert_grid_v(grid: Grid) -> Grid:
 def rang(x, y) -> int:
     """trouver le rang sur une grille d'une case"""
     value: int = 0
-    if x * y <= 0:     #if (x <= 0 and y >= 0) or (y <= 0 and x >= 0):
+    if x * y <= 0:  # if (x <= 0 and y >= 0) or (y <= 0 and x >= 0):
         value = abs(x) + abs(y)
     elif x < 0 and y < 0:
         value = max(-x, -y)
