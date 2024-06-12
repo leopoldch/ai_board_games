@@ -1,23 +1,32 @@
 """définition de la classe du jeu gopher"""
 
+# Dear programmer
+# When I wrote this code, only god and
+# I knew how it worked.
+# Now, only god know it !
+
+# Therefore, if you are trying to optimize
+# the strategies and it fails (most surely),
+# please increase this counter as a
+# warning for the next person
+
+# total_hours_wated_here = 254
+
 import math
 import random
-from typing import Union
+from typing import Optional
 from gopher.utils import (
     Action,
+    state_to_grid,
     str_blue,
     str_red,
-    state_to_grid,
-    grid_to_state,
-    memoize,
     Cell,
     Player,
     State,
     Grid,
+    Environment,
 )
-from gopher.mcts import mcts
-
-Environment = dict
+from gopher.mcts_class import mcts
 
 
 class GopherGame:
@@ -129,7 +138,6 @@ class GopherGame:
         elif len(self.get_legits()) == 1:
             score = 50
         else:
-            # Evaluate potential future moves
             future_moves = len(self.get_legits())
             if future_moves > 3:
                 score += 1
@@ -183,17 +191,6 @@ class GopherGame:
         self.__legits = []
         self.__played.append(cell)
 
-    def unmake_move(self, cell: Cell) -> None:
-        """unplay item on grid"""
-        if cell not in self.__played:
-            raise ValueError("Pion pas joué")
-        self.__grid[cell] = 0
-        self.__updated = False
-        self.__legits = []
-        self.__played.remove(cell)
-        if len(self.__played) == 0:
-            self.__firstmove = True
-
     def score(self) -> float:
         """evaluation func"""
         self.__verify_update()
@@ -202,15 +199,6 @@ class GopherGame:
         if self.__legits:
             return 1
         return -1
-
-    def score_variant(self) -> int:
-        """autre fonction de scoring"""
-        score = self.score()
-        if score == 1:
-            return 10 if self.get_player() == 1 else -10
-        elif score == -1:
-            return -10 if self.get_player() == 1 else 10
-        return 0
 
     def final(self) -> bool:
         """returns if game has ended"""
@@ -222,15 +210,18 @@ class GopherGame:
     # ----------------------- ALGO MIN-MAX -----------------------
 
     # @memoize ralenti
-    def __minmax_action(self, depth: int = 0) -> tuple[float, Union[Action, None]]:
-        """Minimax function with memoization."""
+    def __minmax_action(self, depth: int = 0) -> tuple[float, Action]:
+        """Minimax func."""
         best: tuple[float, Action]
         self.__verify_update()
 
         if depth == 0 or not self.__legits:
-            return (self.score(), None)
+            return (
+                self.score(),
+                (-100, -100),
+            )  # on admet qu'il n'y a pas de case (-100,-100) dans une grille
 
-        original_grid = self.__grid.copy()  # Faire une copie de la grille initiale
+        original_grid = self.__grid.copy()  # Copie la grid départ
 
         if self.__current_player == 1:
             best_value = float("-inf")
@@ -243,7 +234,7 @@ class GopherGame:
                 if total_score > best_value:
                     best_value = total_score
                     best = (total_score, move)
-                self.__grid = original_grid.copy()  # Restaurer la grille initiale
+                self.__grid = original_grid.copy()  # Remet la grid départ
                 self.set_player(1)
             return best
 
@@ -258,7 +249,7 @@ class GopherGame:
                 if total_score < best_value:
                     best_value = total_score
                     best = (total_score, move)
-                self.__grid = original_grid.copy()  # Restaurer la grille initiale
+                self.__grid = original_grid.copy()  # Remet la grid départ
                 self.set_player(2)
             return best
 
@@ -269,7 +260,7 @@ class GopherGame:
     def __alpha_beta_action(
         self, depth: int = 0, alpha: float = float("-inf"), beta: float = float("inf")
     ) -> tuple[float, Action]:
-        """Alpha-beta pruning function using evaluate for move evaluation."""
+        """Alpha-beta func"""
         self.__verify_update()
         best: tuple[float, Action]
 
@@ -279,7 +270,7 @@ class GopherGame:
                 (-100, -100),
             )  # on admet qu'il n'y a pas de case (-100,-100) dans une grille
 
-        original_grid = self.__grid.copy()  # Faire une copie de la grille initiale
+        original_grid = self.__grid.copy()  # Copie la grid départ
 
         if self.__current_player == 1:
             best_value = float("-inf")
@@ -293,7 +284,7 @@ class GopherGame:
                 if total_score > best_value:
                     best_value = total_score
                     best = (total_score, move)
-                self.__grid = original_grid.copy()  # Restaurer la grille initiale
+                self.__grid = original_grid.copy()  # Remet la grid départ
                 self.set_player(1)
                 if best_value >= beta:
                     break  # Coupure bêta
@@ -305,13 +296,12 @@ class GopherGame:
                 self.make_move(move)
                 self.set_player(1)
                 score, _ = self.__alpha_beta_action(depth - 1, alpha, best_value)
-                # Use evaluate to assess the move
                 move_score = self.__evaluate(move)
                 total_score = score + move_score
                 if total_score < best_value:
                     best_value = total_score
                     best = (total_score, move)
-                self.__grid = original_grid.copy()  # Restaurer la grille initiale
+                self.__grid = original_grid.copy()  # Remet la grid départ
                 self.set_player(2)
                 if best_value <= alpha:
                     break  # Coupure alpha
@@ -322,7 +312,7 @@ class GopherGame:
     # ----------------------- ALGO NEGAMAX -----------------------
 
     def __negamax_depth(self) -> int:
-        """returns appropriate depth for __negamax"""
+        """depth for negamax"""
         n: int = sum(
             1 for value in self.__grid.values() if value == 0
         )  # Attention O(n)
@@ -332,11 +322,11 @@ class GopherGame:
         if 127 < n <= 217:
             value = 7
         if 91 < n <= 127:
-            value = 8
+            value = 7
         if 37 < n <= 91:
-            value = 10
+            value = 9
         if 19 < n <= 37:
-            value = 11
+            value = 10
         return value
 
         # if self.__size <= 3: return 12
@@ -344,9 +334,8 @@ class GopherGame:
         # return depths[self.__size]
 
     def __negamax(self, depth: int, alpha: float, beta: float, player: int) -> float:
-        """Négamax avec élagage alpha-beta et table de transposition."""
+        """Négamax avec élagage alpha-beta."""
         self.__verify_update()
-        state = self.__get_state_negamax()
 
         if depth == 0 or not self.__legits:
             return self.__evaluate_negamax(player)
@@ -395,13 +384,9 @@ class GopherGame:
         """Fonction d'évaluation pour le Négamax."""
         return self.score() if self.__current_player == player else -self.score()
 
-    def __get_state_negamax(self) -> tuple:
-        """Renvoie un state approprié pour __negamax"""
-        return tuple(sorted(self.__grid.items()))
-
     # ---------------- DEFINITION DES STRATÉGIES ----------------
 
-    def strategy_negamax(self) -> Cell:
+    def strategy_negamax(self) -> Action:
         """Stratégie de jeu utilisant Négamax."""
         length = len(self.__played)
         if self.__firstmove and self.__size % 2 == 1:
@@ -418,7 +403,7 @@ class GopherGame:
             if next_cell in self.__legits:
                 return next_cell
         depth: int = self.__negamax_depth()
-        tmp: list[Action] = self.__played.copy()
+        tmp: list[Cell] = self.__played.copy()
         value = self.__negamax_action(depth)[1]
         self.__played = tmp
         return value
@@ -447,12 +432,12 @@ class GopherGame:
             next_cell: Cell = self.get_direction()
             if next_cell in self.__legits:
                 return next_cell
-        tmp: list[Action] = self.__played.copy()
+        tmp: list[Cell] = self.__played.copy()
         value: Action = self.__minmax_action(3)[1]
         self.__played = tmp
         return value
 
-    def strategy_mcts(self) -> Action:
+    def strategy_mcts(self) -> Optional[Action]:
         """stratégie MCTS"""
         length = len(self.__played)
         if self.__firstmove and self.__size % 2 == 1:
@@ -468,8 +453,8 @@ class GopherGame:
             next_cell = self.get_direction()
             if next_cell in self.__legits:
                 return next_cell
-        tmp: list[Action] = self.__played.copy()
-        value: Action = mcts(self)
+        tmp: list[Cell] = self.__played.copy()
+        value: Optional[Action] = mcts(self)
         self.__played = tmp
         return value
 
@@ -490,20 +475,12 @@ class GopherGame:
             next_cell: Cell = self.get_direction()
             if next_cell in self.__legits:
                 return next_cell
-        tmp: list[Action] = self.__played.copy()
+        tmp_played: list[Cell] = self.__played.copy()
         value: Action = self.__alpha_beta_action(3)[1]
-        self.__played = tmp
+        self.__played = tmp_played
         return value
 
     # ---------------- GETTER ET SETTERS PUBLICS ----------------
-
-    def update_grid_from_state(self, state: State) -> None:
-        """update la grille à partir d'un state"""
-        self.__grid = state_to_grid(state)
-
-    def get_state_from_grid(self) -> State:
-        """renvoie un state à partir de la grille"""
-        return grid_to_state(self.__grid)
 
     def get_grid(self) -> Grid:
         """getter de la grid"""
@@ -562,6 +539,7 @@ class GopherGame:
             "played": self.__played,
             "starting": self.__starting,
             "updated": self.__updated,
+            "first_visit": self.__first_visit,
         }
 
     def restore_state(self, state: dict) -> None:

@@ -7,8 +7,8 @@ WARNING:
 
 ## Features 
 
-- [X] Server state save at each request
-- [X] Server resilience to client crash
+- [x] Server state save at each request
+- [x] Server resilience to client crash
 - [X] Client resilience to server crash
 - [X] Waiting of request while other player plays
 - [ ] Tournament match maker

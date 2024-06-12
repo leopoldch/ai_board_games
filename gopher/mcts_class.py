@@ -2,18 +2,8 @@
 
 import math
 import random
-from typing import List, Optional, Union
-
-Environment = dict
-Cell = tuple[int, int]
-ActionGopher = Cell
-ActionDodo = tuple[Cell, Cell]
-Action = Union[ActionGopher, ActionDodo]
-Player = int
-State = list[tuple[Cell, Player]]
-Score = int
-Time = int
-Grid = dict[Cell, Player]
+from typing import List, Optional
+from gopher.utils import ActionGopher
 
 
 class Node:
@@ -27,8 +17,8 @@ class Node:
     ) -> None:
         """constructeur du noeud"""
         self.game = game
-        self.parent: Node = parent
-        self.action: ActionGopher = action
+        self.parent: Optional["Node"] = parent
+        self.action: Optional[ActionGopher] = action
         self.children: List["Node"] = []
         self.visits: int = 0
         self.wins: float = 0
@@ -47,6 +37,8 @@ class Node:
         coeff_value: float = 2
         if self.visits == 0:
             return float("inf")
+        if self.parent is None or self.parent.visits == 0:
+            return self.wins / self.visits
         return self.wins / self.visits + coeff_value * (
             math.sqrt(2 * math.log(self.parent.visits) / self.visits)
         )
@@ -89,13 +81,13 @@ class MCTS:
         game.restore_state(state)
         return result
 
-    def backpropagation(self, node: Node, result: float) -> None:
+    def backpropagation(self, node: Optional["Node"], result: float) -> None:
         """backpropagation"""
         while node:
             node.update(result)
             node = node.parent
 
-    def search(self, iterations: int) -> ActionGopher:
+    def search(self, iterations: int) -> Optional[ActionGopher]:
         """rechercher le meilleur coup"""
         for _ in range(iterations):
             node = self.selection(self.root)
@@ -115,7 +107,7 @@ class MCTS:
         raise ValueError("No children found after MCTS iterations.")
 
 
-def mcts(game) -> ActionGopher:
+def mcts(game) -> Optional[ActionGopher]:
     """stratégie MCTS"""
     mcts_search = MCTS(game)
     return mcts_search.search(1000)

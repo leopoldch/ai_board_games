@@ -2,23 +2,15 @@
 
 import time
 import math
-from typing import Union
 from gopher.gopher import GopherGame
-from gopher.utils import (
-    clear
-)
-
-Cell = tuple[int, int]
-ActionGopher = Cell
-ActionDodo = tuple[Cell, Cell]
-Action = Union[ActionGopher, ActionDodo]
-Player = int
+from gopher.utils import clear, Action, Player,Cell
 
 
 def test(iterations: int, size: int, starting: Player) -> None:
     """fonction de test"""
     score: int = 0
     tps1 = time.time()
+    play : Cell
     for i in range(iterations):
         if iterations > 1:
             clear()
@@ -28,11 +20,11 @@ def test(iterations: int, size: int, starting: Player) -> None:
         game = GopherGame(size=size, starting_player=starting)
         while game.final():
             if game.get_player() == 1:
-                play: Action = game.strategy_negamax()
+                play = game.strategy_negamax()
                 game.make_move(play)
                 game.set_player(player=2)
             else:
-                play: Action = game.strategy_random()
+                play = game.strategy_random()
                 game.make_move(play)
                 game.set_player(player=1)
         # on compte le nombre de parties gagnées par le joueur 1
@@ -58,15 +50,4 @@ def test(iterations: int, size: int, starting: Player) -> None:
     )
 
 
-def debug():
-    """fonction de debug"""
-    size = 3
-    for i in range(7):
-        game = GopherGame(size=size + i)
-        print(game)
-        del game
-
-
-test(iterations=100, size=5, starting=2)
-
-# debug()
+test(iterations=1, size=3, starting=2)
