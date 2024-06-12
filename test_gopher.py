@@ -2,12 +2,18 @@
 
 import time
 import math
-from gopher import GopherGame
-from utils import (
-    clear,
-    Action,
-    Player,
+from typing import Union
+from gopher.gopher import GopherGame
+from gopher.utils import (
+    clear
 )
+
+Cell = tuple[int, int]
+ActionGopher = Cell
+ActionDodo = tuple[Cell, Cell]
+Action = Union[ActionGopher, ActionDodo]
+Player = int
+
 
 def test(iterations: int, size: int, starting: Player) -> None:
     """fonction de test"""
@@ -21,7 +27,6 @@ def test(iterations: int, size: int, starting: Player) -> None:
             print("[" + compteur * "-" + ((100 - compteur) * " " + "]"))
         game = GopherGame(size=size, starting_player=starting)
         while game.final():
-            # print(game)
             if game.get_player() == 1:
                 play: Action = game.strategy_negamax()
                 game.make_move(play)
@@ -62,6 +67,6 @@ def debug():
         del game
 
 
-test(iterations=100, size=6, starting=1)
+test(iterations=100, size=5, starting=2)
 
 # debug()

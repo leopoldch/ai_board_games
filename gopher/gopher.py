@@ -102,6 +102,7 @@ class GopherGame:
         if len(self.__played) > 0:
             self.__firstmove = False
             self.__legits = []
+            self.__updated = False
         if not self.__updated:
             self.__legit_moves()
 
@@ -331,7 +332,7 @@ class GopherGame:
         if 127 < n <= 217:
             value = 7
         if 91 < n <= 127:
-            value = 7
+            value = 8
         if 37 < n <= 91:
             value = 10
         if 19 < n <= 37:
