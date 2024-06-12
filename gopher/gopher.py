@@ -14,6 +14,9 @@
 
 import math
 import random
+import multiprocessing
+from multiprocessing import Pool
+from functools import partial
 from typing import Optional
 from gopher.utils import (
     Action,
@@ -46,6 +49,7 @@ class GopherGame:
         self.__legits: list[Cell] = []
         self.__played: list[Cell] = []
         self.__starting: Player = starting_player
+        self.__negamax_cache: dict = {}
 
     def __create_board(self) -> None:
         """create board using a size"""
@@ -316,26 +320,35 @@ class GopherGame:
         n: int = sum(
             1 for value in self.__grid.values() if value == 0
         )  # Attention O(n)
-        value = 3
-        if 217 < n <= 269:
-            value = 4
-        if 127 < n <= 217:
-            value = 7
-        if 91 < n <= 127:
-            value = 7
-        if 37 < n <= 91:
-            value = 9
-        if 19 < n <= 37:
-            value = 10
-        return value
-
-        # if self.__size <= 3: return 12
-        # depths : dict[int,int] = {4:11,5:9,6:9,7:7,8:6,9:6,10:4}
-        # return depths[self.__size]
+        #value = 3
+        #if 217 < n <= 269:
+        #    value = 4 # taille 10
+        #if 127 < n <= 217:
+        #    value = 6  # taille 8 - 9
+        #if 91 < n <= 127:
+        #    value = 8 # taille 7
+        #if 37 < n <= 91:
+        #    value = 9 # taille 5 - 6
+        #if 19 < n <= 37:
+        #    value = 12 # taille 3-4
+        #return value
+        if self.__size <= 3: return 12
+        depths : dict[int,int] = {4:11,5:8,6:6,7:7,8:6,9:6,10:4}
+        return depths[self.__size]
 
     def __negamax(self, depth: int, alpha: float, beta: float, player: int) -> float:
-        """Négamax avec élagage alpha-beta."""
+        """Négamax avec élagage alpha-beta (variante de min max)"""
         self.__verify_update()
+        state = self.__get_state_negamax()
+        # possibilitée : pas de cache sur les petites tailles -> jusque 6
+        # et donc profondeur plus faible size 5 -> depth 7
+        # et size 6 -> prof 6 par exemple 
+        if (
+            self.__size > 6 and
+            state in self.__negamax_cache
+            and self.__negamax_cache[state]["depth"] >= depth
+        ):
+            return self.__negamax_cache[state]["value"]
 
         if depth == 0 or not self.__legits:
             return self.__evaluate_negamax(player)
@@ -356,10 +369,12 @@ class GopherGame:
             alpha = max(alpha, eval_value)
             if alpha >= beta:
                 break
+        if self.__size > 6:
+            self.__negamax_cache[state] = {"value": max_eval, "depth": depth}
         return max_eval
 
     def __negamax_action(self, depth: int = 3) -> tuple[float, Cell]:
-        """Trouve le meilleur mouvement en utilisant Négamax."""
+        """returns negamax action"""
         best_move: tuple[int, int]
         max_eval = float("-inf")
         alpha = float("-inf")
@@ -381,13 +396,19 @@ class GopherGame:
         return max_eval, best_move
 
     def __evaluate_negamax(self, player: int) -> float:
-        """Fonction d'évaluation pour le Négamax."""
+        """evaluate func for negamax"""
         return self.score() if self.__current_player == player else -self.score()
 
+    def __get_state_negamax(self) -> tuple:
+        """Renvoie un state hashable pour negamax"""
+        return tuple(sorted(self.__grid.items()))
+
     # ---------------- DEFINITION DES STRATÉGIES ----------------
+    # la stratégie utilisée pour jouer est negamax 
+    # les autres sont toutes moins efficaces
 
     def strategy_negamax(self) -> Action:
-        """Stratégie de jeu utilisant Négamax."""
+        """Stratégie de jeu utilisant Négamax"""
         length = len(self.__played)
         if self.__firstmove and self.__size % 2 == 1:
             return (0, 0)
@@ -459,7 +480,7 @@ class GopherGame:
         return value
 
     def strategy_alpha_beta(self) -> Action:
-        """Strategy de jeu avec alpha-beta"""
+        """strategy de jeu avec alpha-beta"""
         length: int = len(self.__played)
 
         if self.__firstmove:
@@ -495,7 +516,8 @@ class GopherGame:
         return self.__current_player
 
     def set_player(self, player: Player):
-        """Setter pour le joueur actuel"""
+        """setter pour le joueur actuel"""
+        # utilisée dans la boucle de jeu
         if player not in [1, 2]:
             raise ValueError("Le joueur doit être soit 1 soit 2")
         self.__current_player = player
@@ -511,6 +533,10 @@ class GopherGame:
 
     def get_direction(self) -> Cell:
         """fonction pour avoir la direction en cas de grille impair"""
+        
+        # sur unr grille impair un simple calcul permet 
+        # de trouver le meilleur coup
+        
         last: Cell = self.__played[-1]
         value = self.__grid[last]
         verif = 0
@@ -529,7 +555,8 @@ class GopherGame:
         return next_cell
 
     def save_state(self) -> dict:
-        """Sauvegarde l'état actuel du jeu sous forme de dictionnaire."""
+        """sauvegarde l'état du jeu"""
+        # utilisée dans MCTS
         return {
             "grid": self.__grid.copy(),
             "current_player": self.__current_player,
@@ -540,6 +567,7 @@ class GopherGame:
             "starting": self.__starting,
             "updated": self.__updated,
             "first_visit": self.__first_visit,
+            "negamax_cache" : self.__negamax_cache,
         }
 
     def restore_state(self, state: dict) -> None:
@@ -553,9 +581,10 @@ class GopherGame:
         self.__starting = state["starting"]
         self.__updated = state["updated"]
         self.__first_visit = state["first_visit"]
+        self.__negamax_cache = state["negamax_cache"]
 
     def to_environnement(self) -> dict:
-        """Sauvegarde l'état actuel du jeu sous forme de dictionnaire."""
+        """sauvegarde de l'environnement"""
         return {
             "grid": self.__grid.copy(),
             "current_player": self.__current_player,
@@ -567,6 +596,8 @@ class GopherGame:
             "updated": False,
             "game": "gopher",
             "first_visit": self.__first_visit,
+            "negamax_cache" : self.__negamax_cache,
+
         }
 
     def restore_env(self, state: State, env: Environment, current: Player) -> None:

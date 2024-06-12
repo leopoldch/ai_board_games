@@ -3,7 +3,7 @@
 import time
 import math
 from gopher.gopher import GopherGame
-from gopher.utils import clear, Action, Player,Cell
+from gopher.utils import clear, Player,Cell
 
 
 def test(iterations: int, size: int, starting: Player) -> None:
@@ -19,6 +19,7 @@ def test(iterations: int, size: int, starting: Player) -> None:
             print("[" + compteur * "-" + ((100 - compteur) * " " + "]"))
         game = GopherGame(size=size, starting_player=starting)
         while game.final():
+            print(game)
             if game.get_player() == 1:
                 play = game.strategy_negamax()
                 game.make_move(play)
@@ -49,5 +50,5 @@ def test(iterations: int, size: int, starting: Player) -> None:
         f"Nb de win pour le joueur 2: {iterations-score} {((iterations-score)/iterations)*100:.2f}%"
     )
 
-
-test(iterations=1, size=3, starting=2)
+if __name__ == "__main__":
+    test(iterations=2, size=10, starting=2)
