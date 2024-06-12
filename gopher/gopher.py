@@ -25,11 +25,11 @@ class GopherGame:
 
     # --- FONCTIONS UTILITAIRES POUR LE FONCTIONNEMENT DU JEU ---
 
-    def __init__(self, size: int, starting_player: Player ) -> None:
+    def __init__(self, size: int, starting_player: Player) -> None:
         """constructeur de Gopher"""
         self.__size: int = size
         self.__firstmove: bool = True
-        self.__first_visit : bool = True
+        self.__first_visit: bool = True
         self.__current_player: Player = starting_player
         self.__grid: Grid = {}
         self.__create_board()
@@ -99,7 +99,7 @@ class GopherGame:
 
     def __verify_update(self) -> None:
         """vérifier si les coups légits ont été mis à jour"""
-        if len(self.__played)>0:
+        if len(self.__played) > 0:
             self.__firstmove = False
             self.__legits = []
         if not self.__updated:
@@ -220,7 +220,7 @@ class GopherGame:
 
     # ----------------------- ALGO MIN-MAX -----------------------
 
-    #@memoize ralenti 
+    # @memoize ralenti
     def __minmax_action(self, depth: int = 0) -> tuple[float, Union[Action, None]]:
         """Minimax function with memoization."""
         best: tuple[float, Action]
@@ -327,7 +327,7 @@ class GopherGame:
         )  # Attention O(n)
         value = 3
         if 217 < n <= 269:
-            value= 4
+            value = 4
         if 127 < n <= 217:
             value = 7
         if 91 < n <= 127:
@@ -417,7 +417,7 @@ class GopherGame:
             if next_cell in self.__legits:
                 return next_cell
         depth: int = self.__negamax_depth()
-        tmp : list[Action] = self.__played.copy()
+        tmp: list[Action] = self.__played.copy()
         value = self.__negamax_action(depth)[1]
         self.__played = tmp
         return value
@@ -446,7 +446,7 @@ class GopherGame:
             next_cell: Cell = self.get_direction()
             if next_cell in self.__legits:
                 return next_cell
-        tmp : list[Action] = self.__played.copy()
+        tmp: list[Action] = self.__played.copy()
         value: Action = self.__minmax_action(3)[1]
         self.__played = tmp
         return value
@@ -467,8 +467,8 @@ class GopherGame:
             next_cell = self.get_direction()
             if next_cell in self.__legits:
                 return next_cell
-        tmp : list[Action] = self.__played.copy()
-        value : Action = mcts(self)
+        tmp: list[Action] = self.__played.copy()
+        value: Action = mcts(self)
         self.__played = tmp
         return value
 
@@ -489,7 +489,7 @@ class GopherGame:
             next_cell: Cell = self.get_direction()
             if next_cell in self.__legits:
                 return next_cell
-        tmp : list[Action] = self.__played.copy()
+        tmp: list[Action] = self.__played.copy()
         value: Action = self.__alpha_beta_action(3)[1]
         self.__played = tmp
         return value
@@ -562,7 +562,7 @@ class GopherGame:
             "starting": self.__starting,
             "updated": self.__updated,
         }
-        
+
     def restore_state(self, state: dict) -> None:
         """Permet de remettres des attributs utile dans MCTS"""
         self.__grid = state["grid"]
@@ -572,43 +572,47 @@ class GopherGame:
         self.__legits = state["legits"]
         self.__played = state["played"]
         self.__starting = state["starting"]
-        self.__updated = state["updated"]  
-        self.__first_visit = state['first_visit']
-      
+        self.__updated = state["updated"]
+        self.__first_visit = state["first_visit"]
+
     def to_environnement(self) -> dict:
         """Sauvegarde l'état actuel du jeu sous forme de dictionnaire."""
         return {
             "grid": self.__grid.copy(),
-            "current_player" : self.__current_player,
+            "current_player": self.__current_player,
             "firstmove": self.__firstmove,
             "size": self.__size,
             "legits": self.__legits,
             "played": self.__played,
             "starting": self.__starting,
             "updated": False,
-            "game" : 'gopher',
-            "first_visit" : self.__first_visit
+            "game": "gopher",
+            "first_visit": self.__first_visit,
         }
 
-    def restore_env(self, state : State, env : Environment, current : Player) -> None:
-        """permet de restaurer le jeu à partir de l'environnement"""   
-        
-        self.restore_state(env) # attention on restaure avec l'ancienne grille volontairement
-        opponent : Player = 3 - current
+    def restore_env(self, state: State, env: Environment, current: Player) -> None:
+        """permet de restaurer le jeu à partir de l'environnement"""
+
+        self.restore_state(
+            env
+        )  # attention on restaure avec l'ancienne grille volontairement
+        opponent: Player = 3 - current
         self.__current_player = current
         self.__updated = False
-        new_grid : Grid = state_to_grid(state)
+        new_grid: Grid = state_to_grid(state)
         if new_grid != self.__grid:
             for key, item in new_grid.items():
-                if self.__grid[key] == 0 and item == opponent: # on a trouvé le dernier coup
+                if (
+                    self.__grid[key] == 0 and item == opponent
+                ):  # on a trouvé le dernier coup
                     self.__played.append(key)
         self.__grid = new_grid
-        
+
         if self.__first_visit:
-            if len(self.__played)==1:
-                self.__starting=opponent
+            if len(self.__played) == 1:
+                self.__starting = opponent
                 self.__firstmove = False
                 self.__legits = []
-            elif len(self.__played)==0:
-                self.__starting=current
+            elif len(self.__played) == 0:
+                self.__starting = current
         self.__verify_update()
