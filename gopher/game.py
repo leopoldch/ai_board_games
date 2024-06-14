@@ -33,5 +33,4 @@ def strategy_gopher(
     # print(action)
     game.make_move(action)
     new_env: Environment = game.to_environnement()
-    print(action)
     return (new_env, action)

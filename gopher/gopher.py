@@ -13,9 +13,7 @@
 # total_hours_wasted_here = 254
 
 import math
-import numpy as np
 import random
-from typing import Optional
 from gopher.utils import (
     Action,
     state_to_grid,
@@ -26,12 +24,24 @@ from gopher.utils import (
     State,
     Grid,
     Environment,
+    get_state_negamax,
 )
-from gopher.mcts_class import mcts
 
 
 class GopherGame:
     """classe du jeu gopher"""
+    
+    # --------------- DESCRIPTION FONCTIONNEMENT ---------------
+
+    # l'accès à un attribut dans un dictionnaire python (hash table)
+    # est en O(1) c'est pour ça que dans le code il y a souvent
+    # self.__grid.get(key)
+    # ce qui prend du temps n'est pas le fonctionnement de jeu 
+    # mais bien l'exploration du graphe avec Negamax
+    # Pour contrer cette explosion algorithmique 
+    # il y a un élagage alpha beta, un cache qui enregistre les
+    # grilles déjà explorées
+    # Les symétries ne sont pas efficaces
 
     # --- FONCTIONS UTILITAIRES POUR LE FONCTIONNEMENT DU JEU ---
 
@@ -123,7 +133,7 @@ class GopherGame:
         if abs(x) > max_val or abs(y) > max_val:
             raise ValueError("Case non dans le tableau")
         neighbors = []
-        directions = np.array([[-1, -1], [-1, 0], [0, -1], [0, 1], [1, 0], [1, 1]])
+        directions = [[-1, -1], [-1, 0], [0, -1], [0, 1], [1, 0], [1, 1]]
         for direction in directions:
             vx, vy = x + direction[0], y + direction[1]
             if (-max_val <= vx <= max_val) and (-max_val <= vy <= max_val):
@@ -132,8 +142,12 @@ class GopherGame:
                     neighbors.append(key)
         return neighbors
 
+    """ 
+    
+    pas utilisé pour Negamax 
+    
     def __evaluate(self, _) -> float:
-        """Evaluate the potential of a move."""
+        '''Evaluate the potential of a move.'''
         score = 0
         self.__legit_moves()
         if len(self.get_legits()) == 0:
@@ -150,6 +164,28 @@ class GopherGame:
                 score += 3
         return -score
 
+    def __evaluate_move(self, cell : Cell) -> float:
+        '''Evaluate the potential of a move v2'''
+        self.make_move(cell)
+        score = 0
+        self.__legit_moves()
+        if len(self.get_legits()) == 0:
+            score = 100
+        elif len(self.get_legits()) == 1:
+            score = 50
+        else:
+            future_moves = len(self.get_legits())
+            if future_moves > 3:
+                score += 1
+            elif future_moves == 3:
+                score += 2
+            else:
+                score += 3
+        self.__unmake_move(cell)
+        return score
+    
+    """
+    
     def is_legit(self, start: Cell) -> bool:
         """returns if move is legit or not"""
         if self.__firstmove:
@@ -193,6 +229,15 @@ class GopherGame:
         self.__updated = False
         self.__legits = []
         self.__played.append(cell)
+
+    def __unmake_move(self, cell: Cell) -> None:
+        '''unplay item on grid'''
+        self.__grid[cell] = 0
+        self.__updated = False
+        self.__legits = []
+        self.__played.remove(cell)
+        if not self.__played:
+            self.__firstmove = True
 
     def score(self) -> float:
         """evaluation func"""
@@ -319,41 +364,74 @@ class GopherGame:
 
     # ----------------------- ALGO NEGAMAX -----------------------
 
-    # Gestion des symétries dans Négamax
+
+    def __negamax_memoize(func):
+        """Cache pour negamax"""
+
+        def memoized_func(self, depth: int, alpha: float, beta: float, player: int):
+            """wrapped func"""
+            self.__verify_update()
+            state = get_state_negamax(self.__grid)
+            
+            if state in self.__negamax_cache:
+                    cached_entry = self.__negamax_cache[state]
+                    if cached_entry["depth"] >= depth:
+                        return cached_entry["value"]
+                        ''' if cached_entry["flag"] == "exact":
+                            return cached_entry["value"]
+                        elif cached_entry["flag"] == "lowerbound" and cached_entry["value"] > alpha:
+                            alpha = cached_entry["value"]
+                        elif cached_entry["flag"] == "upperbound" and cached_entry["value"] < beta:
+                            beta = cached_entry["value"]
+                        if alpha >= beta:
+                            return cached_entry["value"]'''
+            
+            max_eval = func(self, depth, alpha, beta, player)
+            
+            flag = "exact"
+            if max_eval <= alpha:
+                flag = "upperbound"
+            elif max_eval >= beta:
+                flag = "lowerbound"
+            
+            if state not in self.__negamax_cache or self.__negamax_cache[state]["depth"] < depth:
+                self.__negamax_cache[state] = {
+                        "value": max_eval,
+                        "depth": depth,
+                        "flag": flag
+                    }
+            return max_eval  
+        return memoized_func
 
     def __negamax_depth(self) -> int:
         """depth for negamax"""
         if self.__size <= 3: return 12
-        depths : dict[int,int] = {4:10,5:9,6:7,7:7,8:6,9:6,10:4}
-        return depths.get(self.__size, 4)    
+        depths : dict[int,int] = {4:12,5:10,6:8,7:7,8:6,9:6,10:5}
+        return depths.get(self.__size, 4) 
 
+    @__negamax_memoize
     def __negamax(self, depth: int, alpha: float, beta: float, player: int) -> float:
         """Négamax avec élagage alpha-beta et mise en cache"""
         self.__verify_update()
-        state = self.__get_state_negamax()
-
-        if state in self.__negamax_cache and self.__negamax_cache.get(state)["depth"] >= depth:
-            return self.__negamax_cache.get(state)["value"]
 
         if depth == 0 or not self.__legits:
             return self.__evaluate_negamax(player)
 
         max_eval = float("-inf")
-        original_grid = self.__grid.copy()
-        ordered_moves = sorted(self.__legits, key=self.__evaluate_negamax, reverse=True)
-
-        for move in ordered_moves:
+        
+        #moves = sorted(self.__legits, key=self.__evaluate_move, reverse=True) # rajoute bcp de complexité
+        
+        for move in self.__legits:
             self.make_move(move)
             self.set_player(3 - self.__current_player)
             eval_value = -self.__negamax(depth - 1, -beta, -alpha, 3 - player)
-            self.__grid = original_grid.copy()
+            self.__unmake_move(move)
             self.set_player(player)
             max_eval = max(max_eval, eval_value)
             alpha = max(alpha, eval_value)
             if alpha >= beta:
                 break
         
-        self.__negamax_cache[state] = {"value": max_eval, "depth": depth}
         return max_eval
 
     def __negamax_action(self, depth: int = 3) -> tuple[float, Cell]:
@@ -363,15 +441,14 @@ class GopherGame:
         alpha = float("-inf")
         beta = float("inf")
 
-        original_grid = self.__grid.copy()
         player = self.__current_player
-        ordered_moves = sorted(self.__legits, key=self.__evaluate, reverse=True)
+        #moves = sorted(self.__legits, key=self.__evaluate_move, reverse=True) # rajoute bcp de complexité
 
-        for move in ordered_moves:
+        for move in self.__legits:
             self.make_move(move)
             self.set_player(3 - self.__current_player)
             eval_value = -self.__negamax(depth - 1, -beta, -alpha, 3 - player)
-            self.__grid = original_grid.copy()
+            self.__unmake_move(move)
             self.set_player(player)
             if eval_value > max_eval:
                 max_eval = eval_value
@@ -383,9 +460,8 @@ class GopherGame:
         """evaluate func for negamax"""
         return self.score() if self.__current_player == player else -self.score()
 
-    def __get_state_negamax(self) -> tuple:
-        """Renvoie un state hashable pour negamax"""
-        return tuple(sorted(self.__grid.items()))
+
+
 
     # ---------------- DEFINITION DES STRATÉGIES ----------------
     # la stratégie utilisée pour jouer est negamax 
@@ -393,24 +469,27 @@ class GopherGame:
 
     def strategy_negamax(self) -> Action:
         """Stratégie de jeu utilisant Négamax"""
+        length: int = len(self.__played)
         if self.__firstmove and self.__size % 2 == 1:
             return (0, 0)
         if self.__firstmove and self.__size % 2 == 0:
             return (0, self.__size - 1)
-        #length = len(self.__played)
-        #if (
-        #    length > 1
-        #    and self.__starting == self.__current_player
-        #    and self.__size % 2 == 1
-        #):
-        #    length -= 1
-        #    next_cell = self.get_direction()
-        #    if next_cell in self.__legits:
-        #        return next_cell
+        if (
+            length > 1
+            and self.__starting == self.__current_player
+            and self.__size % 2 == 1
+        ):
+            length -= 1
+            next_cell: Cell = self.get_direction()
+            if next_cell in self.__legits:
+                return next_cell
+            # si c'est pas dans les coups légaux alors on passe sur du négamax 
         depth: int = self.__negamax_depth()
+        #print(f"profondeur : {depth} - taille grille : {self.__size}")
         tmp: list[Cell] = self.__played.copy()
         value = self.__negamax_action(depth)[1]
         self.__played = tmp
+        #print(f"cache : {len(self.__negamax_cache)}"if self.__negamax_cache else "no cache" )
         return value
 
     def strategy_random(self) -> Action:
@@ -490,7 +569,7 @@ class GopherGame:
     """
 
     # ---------------- GETTER ET SETTERS PUBLICS ----------------
-
+    
     def get_player(self) -> Player:
         """getter pour l'attribut joueur actuel"""
         return self.__current_player
@@ -582,7 +661,6 @@ class GopherGame:
 
     def restore_env(self, state: State, env: Environment, current: Player) -> None:
         """permet de restaurer le jeu à partir de l'environnement"""
-
         self.restore_state(
             env
         )  # attention on restaure avec l'ancienne grille volontairement
