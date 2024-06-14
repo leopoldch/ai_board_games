@@ -12,7 +12,6 @@ from gopher.utils import (
 
 # NE PAS OUBLIER DE METTRE LE JEU AUQUEL ON JOUE DANS L'ENV
 
-
 def initialize_gopher(player: Player, hex_size: int, total_time: Time) -> Environment:
     """initializer le jeu"""
     game: GopherGame = GopherGame(size=hex_size, starting_player=player)

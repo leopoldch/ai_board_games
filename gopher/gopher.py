@@ -10,13 +10,10 @@
 # please increase this counter as a
 # warning for the next person
 
-# total_hours_wated_here = 254
+# total_hours_wasted_here = 254
 
 import math
 import random
-import multiprocessing
-from multiprocessing import Pool
-from functools import partial
 from typing import Optional
 from gopher.utils import (
     Action,
@@ -317,23 +314,8 @@ class GopherGame:
 
     def __negamax_depth(self) -> int:
         """depth for negamax"""
-        n: int = sum(
-            1 for value in self.__grid.values() if value == 0
-        )  # Attention O(n)
-        #value = 3
-        #if 217 < n <= 269:
-        #    value = 4 # taille 10
-        #if 127 < n <= 217:
-        #    value = 6  # taille 8 - 9
-        #if 91 < n <= 127:
-        #    value = 8 # taille 7
-        #if 37 < n <= 91:
-        #    value = 9 # taille 5 - 6
-        #if 19 < n <= 37:
-        #    value = 12 # taille 3-4
-        #return value
         if self.__size <= 3: return 12
-        depths : dict[int,int] = {4:11,5:8,6:6,7:7,8:6,9:6,10:4}
+        depths : dict[int,int] = {4:11,5:10,6:7,7:7,8:6,9:6,10:4}
         return depths[self.__size]
 
     def __negamax(self, depth: int, alpha: float, beta: float, player: int) -> float:
@@ -344,7 +326,7 @@ class GopherGame:
         # et donc profondeur plus faible size 5 -> depth 7
         # et size 6 -> prof 6 par exemple 
         if (
-            self.__size > 6 and
+            #self.__size > 6 and
             state in self.__negamax_cache
             and self.__negamax_cache[state]["depth"] >= depth
         ):
@@ -369,8 +351,8 @@ class GopherGame:
             alpha = max(alpha, eval_value)
             if alpha >= beta:
                 break
-        if self.__size > 6:
-            self.__negamax_cache[state] = {"value": max_eval, "depth": depth}
+        #if self.__size > 6:
+        self.__negamax_cache[state] = {"value": max_eval, "depth": depth}
         return max_eval
 
     def __negamax_action(self, depth: int = 3) -> tuple[float, Cell]:

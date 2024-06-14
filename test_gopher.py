@@ -19,7 +19,7 @@ def test(iterations: int, size: int, starting: Player) -> None:
             print("[" + compteur * "-" + ((100 - compteur) * " " + "]"))
         game = GopherGame(size=size, starting_player=starting)
         while game.final():
-            print(game)
+            #print(game)
             if game.get_player() == 1:
                 play = game.strategy_negamax()
                 game.make_move(play)
@@ -51,4 +51,4 @@ def test(iterations: int, size: int, starting: Player) -> None:
     )
 
 if __name__ == "__main__":
-    test(iterations=2, size=10, starting=2)
+    test(iterations=10, size=5, starting=2)
