@@ -13,6 +13,7 @@
 # total_hours_wasted_here = 254
 
 import math
+import numpy as np
 import random
 from typing import Optional
 from gopher.utils import (
@@ -109,7 +110,7 @@ class GopherGame:
 
     def __verify_update(self) -> None:
         """vérifier si les coups légits ont été mis à jour"""
-        if len(self.__played) > 0:
+        if self.__played:
             self.__firstmove = False
             self.__legits = []
             self.__updated = False
@@ -122,11 +123,12 @@ class GopherGame:
         if abs(x) > max_val or abs(y) > max_val:
             raise ValueError("Case non dans le tableau")
         neighbors = []
-        for dx, dy in [(-1, -1), (-1, 0), (0, -1), (0, 1), (1, 0), (1, 1)]:
-            vx, vy = x + dx, y + dy
+        directions = np.array([[-1, -1], [-1, 0], [0, -1], [0, 1], [1, 0], [1, 1]])
+        for direction in directions:
+            vx, vy = x + direction[0], y + direction[1]
             if (-max_val <= vx <= max_val) and (-max_val <= vy <= max_val):
                 key = (vx, vy)
-                if key in self.__grid and self.__grid[key] != -1:
+                if key in self.__grid and self.__grid.get(key) != -1:
                     neighbors.append(key)
         return neighbors
 
@@ -152,20 +154,20 @@ class GopherGame:
         """returns if move is legit or not"""
         if self.__firstmove:
             return True
-        if start is None or self.__grid[start] != 0:
+        if start is None or self.__grid.get(start) != 0:
             return False
         neighbors: list[Cell] = self.__get_neighbors(start[0], start[1])
         verif: int = 0
         for item in neighbors:
             if verif > 1:
                 return False
-            if self.__grid[(item[0], item[1])] == self.__current_player:
+            if self.__grid.get((item[0], item[1])) == self.__current_player:
                 return False
             if self.__current_player == 1:
-                if self.__grid[(item[0], item[1])] == 2:
+                if self.__grid.get((item[0], item[1])) == 2:
                     verif += 1
             elif self.__current_player == 2:
-                if self.__grid[(item[0], item[1])] == 1:
+                if self.__grid.get((item[0], item[1])) == 1:
                     verif += 1
         if verif == 1:
             return True
@@ -208,11 +210,14 @@ class GopherGame:
             return True
         return False
 
+
+    """ Les algos ci-dessous ne sont pas utilisés
+
     # ----------------------- ALGO MIN-MAX -----------------------
 
     # @memoize ralenti
     def __minmax_action(self, depth: int = 0) -> tuple[float, Action]:
-        """Minimax func."""
+        '''Minimax func.'''
         best: tuple[float, Action]
         self.__verify_update()
 
@@ -261,7 +266,7 @@ class GopherGame:
     def __alpha_beta_action(
         self, depth: int = 0, alpha: float = float("-inf"), beta: float = float("inf")
     ) -> tuple[float, Action]:
-        """Alpha-beta func"""
+        '''Alpha-beta func'''
         self.__verify_update()
         best: tuple[float, Action]
 
@@ -310,36 +315,32 @@ class GopherGame:
 
         raise ValueError("Joueur inconnu")
 
+    """
+
     # ----------------------- ALGO NEGAMAX -----------------------
+
+    # Gestion des symétries dans Négamax
 
     def __negamax_depth(self) -> int:
         """depth for negamax"""
         if self.__size <= 3: return 12
-        depths : dict[int,int] = {4:11,5:10,6:7,7:7,8:6,9:6,10:4}
-        return depths[self.__size]
+        depths : dict[int,int] = {4:10,5:9,6:7,7:7,8:6,9:6,10:4}
+        return depths.get(self.__size, 4)    
 
     def __negamax(self, depth: int, alpha: float, beta: float, player: int) -> float:
-        """Négamax avec élagage alpha-beta (variante de min max)"""
+        """Négamax avec élagage alpha-beta et mise en cache"""
         self.__verify_update()
         state = self.__get_state_negamax()
-        # possibilitée : pas de cache sur les petites tailles -> jusque 6
-        # et donc profondeur plus faible size 5 -> depth 7
-        # et size 6 -> prof 6 par exemple 
-        if (
-            #self.__size > 6 and
-            state in self.__negamax_cache
-            and self.__negamax_cache[state]["depth"] >= depth
-        ):
-            return self.__negamax_cache[state]["value"]
+
+        if state in self.__negamax_cache and self.__negamax_cache.get(state)["depth"] >= depth:
+            return self.__negamax_cache.get(state)["value"]
 
         if depth == 0 or not self.__legits:
             return self.__evaluate_negamax(player)
 
         max_eval = float("-inf")
         original_grid = self.__grid.copy()
-        ordered_moves = sorted(
-            self.__legits, key=self.__evaluate, reverse=True
-        )  # Tri heuristique
+        ordered_moves = sorted(self.__legits, key=self.__evaluate_negamax, reverse=True)
 
         for move in ordered_moves:
             self.make_move(move)
@@ -351,12 +352,12 @@ class GopherGame:
             alpha = max(alpha, eval_value)
             if alpha >= beta:
                 break
-        #if self.__size > 6:
+        
         self.__negamax_cache[state] = {"value": max_eval, "depth": depth}
         return max_eval
 
     def __negamax_action(self, depth: int = 3) -> tuple[float, Cell]:
-        """returns negamax action"""
+        """returns negamax action with alpha-beta pruning"""
         best_move: tuple[int, int]
         max_eval = float("-inf")
         alpha = float("-inf")
@@ -365,6 +366,7 @@ class GopherGame:
         original_grid = self.__grid.copy()
         player = self.__current_player
         ordered_moves = sorted(self.__legits, key=self.__evaluate, reverse=True)
+
         for move in ordered_moves:
             self.make_move(move)
             self.set_player(3 - self.__current_player)
@@ -391,20 +393,20 @@ class GopherGame:
 
     def strategy_negamax(self) -> Action:
         """Stratégie de jeu utilisant Négamax"""
-        length = len(self.__played)
         if self.__firstmove and self.__size % 2 == 1:
             return (0, 0)
         if self.__firstmove and self.__size % 2 == 0:
             return (0, self.__size - 1)
-        if (
-            length > 1
-            and self.__starting == self.__current_player
-            and self.__size % 2 == 1
-        ):
-            length -= 1
-            next_cell = self.get_direction()
-            if next_cell in self.__legits:
-                return next_cell
+        #length = len(self.__played)
+        #if (
+        #    length > 1
+        #    and self.__starting == self.__current_player
+        #    and self.__size % 2 == 1
+        #):
+        #    length -= 1
+        #    next_cell = self.get_direction()
+        #    if next_cell in self.__legits:
+        #        return next_cell
         depth: int = self.__negamax_depth()
         tmp: list[Cell] = self.__played.copy()
         value = self.__negamax_action(depth)[1]
@@ -419,8 +421,10 @@ class GopherGame:
         value = random.randint(0, len(self.__legits) - 1)
         return self.__legits[value]
 
+    """ Les stratégies ci-dessous ne sont pas utilisées
+    
     def strategy_minmax(self) -> Action:
-        """strategy de jeu avec minmax"""
+        '''strategy de jeu avec minmax'''
         length: int = len(self.__played)
         if self.__firstmove and self.__size % 2 == 1:
             return (0, 0)
@@ -441,7 +445,7 @@ class GopherGame:
         return value
 
     def strategy_mcts(self) -> Optional[Action]:
-        """stratégie MCTS"""
+        '''stratégie MCTS'''
         length = len(self.__played)
         if self.__firstmove and self.__size % 2 == 1:
             return (0, 0)
@@ -462,7 +466,7 @@ class GopherGame:
         return value
 
     def strategy_alpha_beta(self) -> Action:
-        """strategy de jeu avec alpha-beta"""
+        '''strategy de jeu avec alpha-beta'''
         length: int = len(self.__played)
 
         if self.__firstmove:
@@ -483,15 +487,9 @@ class GopherGame:
         self.__played = tmp_played
         return value
 
+    """
+
     # ---------------- GETTER ET SETTERS PUBLICS ----------------
-
-    def get_grid(self) -> Grid:
-        """getter de la grid"""
-        return self.__grid
-
-    def set_grid(self, newgrid: Grid) -> None:
-        """setter de la grid"""
-        self.__grid = newgrid
 
     def get_player(self) -> Player:
         """getter pour l'attribut joueur actuel"""
@@ -595,7 +593,7 @@ class GopherGame:
         if new_grid != self.__grid:
             for key, item in new_grid.items():
                 if (
-                    self.__grid[key] == 0 and item == opponent
+                    self.__grid.get(key) == 0 and item == opponent
                 ):  # on a trouvé le dernier coup
                     self.__played.append(key)
         self.__grid = new_grid
