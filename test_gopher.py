@@ -65,6 +65,9 @@ def utlimate_test(iterations: int, fr : int, to : int) -> None:
     result = f"NOMBRE D'ITERATIONS PAR SIZE ET PAR SIDE DE DEPART : {iterations}\n"
     result += "JOUEUR 1 NEGAMAX - JOUEUR 2 RANDOM\n\n"
     result += "=========================================\n"
+    with open("stats.txt",'a+') as file:
+            file.write(result)
+            result = ""
     for size in range(fr,to):
         result+="\n"
         score: int = 0
@@ -99,8 +102,14 @@ def utlimate_test(iterations: int, fr : int, to : int) -> None:
         result+=f"Temps par partie  : {temps/iterations:.4f} secondes. Max : {max_val:.4f} secondes.\n"
         result+=f"Nb de win pour le joueur 1: {score} {(score/iterations)*100:.2f}%\n"
         result+=f"Nb de win pour le joueur 2: {iterations-score} {((iterations-score)/iterations)*100:.2f}%\n"
+        with open("stats.txt",'a+') as file:
+            file.write(result)
+            result = ""
     result += "\n\n\nJOUEUR 2 NEGAMAX - JOUEUR 1 RANDOM\n\n"
     result += "=========================================\n"
+    with open("stats.txt",'a+') as file:
+            file.write(result)
+            result = ""
     for size in range(fr,to):
         result+="\n"
         score: int = 0
@@ -135,9 +144,10 @@ def utlimate_test(iterations: int, fr : int, to : int) -> None:
         result+=f"Temps par partie  : {temps/iterations:.4f} secondes. Max : {max_val:.4f} secondes.\n"
         result+=f"Nb de win pour le joueur 1: {score} {(score/iterations)*100:.2f}%\n"
         result+=f"Nb de win pour le joueur 2: {iterations-score} {((iterations-score)/iterations)*100:.2f}%\n"
-
-    with open("stats.txt",'w+') as file:
-        file.write(result)
+        with open("stats.txt",'a+') as file:
+            file.write(result)
+            result = ""
+    
 
 
 if __name__ == "__main__":
