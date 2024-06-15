@@ -53,15 +53,15 @@ if __name__ == "__main__":
     parser.add_argument("members")
     parser.add_argument("password")
     parser.add_argument("-s", "--server-url", default="http://localhost:8080/")
-    parser.add_argument("-d", "--disable-dodo", action="store_false")
-    parser.add_argument("-g", "--disable-gopher", action="store_false")
+    parser.add_argument("-d", "--disable-dodo", action="store_true")
+    parser.add_argument("-g", "--disable-gopher", action="store_true")
     args = parser.parse_args()
 
-    available_games = []
-    if not args.disable_dodo:
-        available_games.append(DODO_STR)
-    if not args.disable_gopher:
-        available_games.append(GOPHER_STR)
+    available_games = [DODO_STR, GOPHER_STR]
+    if args.disable_dodo:
+        available_games.remove(DODO_STR)
+    if args.disable_gopher:
+        available_games.remove(GOPHER_STR)
 
     start(
         args.server_url,

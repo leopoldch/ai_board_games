@@ -7,7 +7,6 @@ from gopher.utils import (
     clear, 
     Player,
     Cell,
-    do_all_symetries,    
 )
 
 def test(iterations: int, size: int, starting: Player) -> None:
@@ -151,5 +150,5 @@ def utlimate_test(iterations: int, fr : int, to : int) -> None:
 
 
 if __name__ == "__main__":
-    #test(iterations=20, size=10, starting=2)
-    utlimate_test(200,4,11)
+    test(iterations=20, size=10, starting=2)
+    #utlimate_test(200,4,11)
