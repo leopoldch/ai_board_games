@@ -376,15 +376,14 @@ class GopherGame:
             if state in self.__negamax_cache:
                     cached_entry = self.__negamax_cache[state]
                     if cached_entry["depth"] >= depth:
-                        return cached_entry["value"]
-                        ''' if cached_entry["flag"] == "exact":
+                        if cached_entry["flag"] == "exact":
                             return cached_entry["value"]
                         elif cached_entry["flag"] == "lowerbound" and cached_entry["value"] > alpha:
                             alpha = cached_entry["value"]
                         elif cached_entry["flag"] == "upperbound" and cached_entry["value"] < beta:
                             beta = cached_entry["value"]
                         if alpha >= beta:
-                            return cached_entry["value"]'''
+                            return cached_entry["value"]
             
             max_eval = func(self, depth, alpha, beta, player)
             
@@ -406,7 +405,7 @@ class GopherGame:
     def __negamax_depth(self) -> int:
         """depth for negamax"""
         if self.__size <= 3: return 12
-        depths : dict[int,int] = {4:12,5:10,6:8,7:7,8:6,9:6,10:5}
+        depths : dict[int,int] = {4:12,5:10,6:9,7:7,8:6,9:5,10:4}
         return depths.get(self.__size, 4) 
 
     @__negamax_memoize
