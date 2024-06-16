@@ -3,7 +3,7 @@ import time
 import random
 import math
 import random
-from utils import (
+from dodo.utils import (
     Action,
     state_to_grid,
     str_blue,
