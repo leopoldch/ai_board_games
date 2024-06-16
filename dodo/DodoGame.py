@@ -214,9 +214,8 @@ class DodoGame:
         if not self.__played:
             self.__firstmove = True
 
-
-    def race_turn_left(self) -> int:
-        player = self.__current_player
+    """
+    def race_turn_left(self,player : Player) -> int:
         if player == 1:
             directions = [(1, 0), (1, 1), (0, 1)]
         else:
@@ -236,6 +235,7 @@ class DodoGame:
                         min_distance = steps
                 race_turns += min_distance
         return race_turns
+        """
 
     def score(self):
         if len(self.__legits) == 0:
@@ -243,9 +243,60 @@ class DodoGame:
         else:
             return -1
 
-    def eval(self):
-        pass
 
+
+    def evaluate2_board(self) -> float:
+        """Evaluate the board state for the current player."""
+        if len(self.__legits) == 0:
+            return 5000
+        else:
+            player = self.__current_player
+            opponent = 3 - player
+
+            player_pieces = 0
+            opponent_pieces = 0
+            player_mobility = 0
+            opponent_mobility = 0
+            center_control = 0
+
+            center_positions = [
+                (0, 0), (-1, 0), (0, -1), (1, 0), (0, 1),
+                (-1, 1), (1, -1), (-2, 1), (1, -2), (2, -1), (-1, 2)
+            ]
+
+            for cell, occupant in self.__grid.items():
+                if occupant == player:
+                    player_pieces += 1
+                    if cell in center_positions:
+                        center_control += 1
+                    player_mobility += sum(
+                        1 for direction in [(1, 0), (1, 1), (0, 1)]
+                        if (cell[0] + direction[0], cell[1] + direction[1]) in self.__grid and self.__grid[
+                            (cell[0] + direction[0], cell[1] + direction[1])] == 0
+                    )
+                elif occupant == opponent:
+                    opponent_pieces += 1
+                    if cell in center_positions:
+                        center_control -= 1
+                    opponent_mobility += sum(
+                        1 for direction in [(-1, 0), (-1, -1), (0, -1)]
+                        if (cell[0] + direction[0], cell[1] + direction[1]) in self.__grid and self.__grid[
+                            (cell[0] + direction[0], cell[1] + direction[1])] == 0
+                    )
+
+            piece_advantage = player_pieces - opponent_pieces
+            mobility_advantage = player_mobility - opponent_mobility
+            #race_turn = self.race_turn_left(opponent) - self.race_turn_left(player)
+
+            # Weight the different components of the evaluation
+            evaluation = (
+                    90 * piece_advantage +  # Pieces are very important
+                    10 * center_control +  # Control of the center is important
+                    5 * mobility_advantage  # Mobility is somewhat important
+            )
+            #print(evaluation)
+
+            return -evaluation
 
 
 
@@ -300,7 +351,7 @@ class DodoGame:
     def __negamax_depth(self) -> int:
         """depth for negamax"""
         if self.__size <= 3: return 12
-        depths: dict[int, int] = {4: 8, 5: 10, 6: 8, 7: 7, 8: 6, 9: 6, 10: 5}
+        depths: dict[int, int] = {4: 2, 5: 10, 6: 8, 7: 7, 8: 6, 9: 6, 10: 5}
         return depths.get(self.__size, 4)
 
     @__negamax_memoize
@@ -340,7 +391,7 @@ class DodoGame:
 
         for move in self.__legits:
             self.make_move(move)
-            self.set_player(3 - self.__current_player)
+            self.set_player(3 - player)
             eval_value = -self.__negamax(depth - 1, -beta, -alpha, 3 - player)
             self.__unmake_move(move)
             self.set_player(player)
@@ -352,7 +403,7 @@ class DodoGame:
 
     def __evaluate_negamax(self, player: int) -> float:
         """evaluate func for negamax"""
-        return self.score() if self.__current_player == player else -self.score()
+        return self.evaluate2_board() if self.__current_player == player else -self.evaluate2_board()
 
     # ---------------- DEFINITION DES STRATÉGIES ----------------
     # la stratégie utilisée pour jouer est negamax
@@ -510,5 +561,4 @@ def test(iter: int, size: int):
 
 
 
-test(50, 4)
-
+test(1000, 4)
