@@ -2,7 +2,7 @@
 
 from dodo.DodoGame import DodoGame
 from typing import Union
-from utils import (
+from dodo.utils import (
     Environment,
     Action,
     Player,
