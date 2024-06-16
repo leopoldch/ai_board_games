@@ -4,6 +4,7 @@ import argparse
 from typing import Dict, Any
 from gndclient import start, Action, Score, Player, State, Time, DODO_STR, GOPHER_STR
 from gopher.game import initialize_gopher, strategy_gopher
+from dodo.Game import initialize_dodo, strategy_dodo
 
 Environment = Dict[str, Any]
 
@@ -21,9 +22,8 @@ def initialize(
         return env
 
     print('Dodo')
-    # Sinon Dodo -> A IMPLEMENTER
-    # pas besoin de else ou elif après return
-    # state de départ à utiliser dans dodo
+    env = initialize_dodo(player=player, hex_size=hex_size, total_time=total_time)
+    return env
 
 def strategy_brain(
     env: Environment, state: State, player: Player, time_left: Time
@@ -36,8 +36,10 @@ def strategy_brain(
         )
         return values
 
-    # Sinon Dodo -> A IMPLEMENTER
-    # pas besoin de else ou elif après return
+    values: tuple[Environment, Action] = strategy_dodo(
+        env, state, player, time_left
+    )
+    return values
 
 def final_result(state: State, score: Score, player: Player):
     """affichage du gagnant"""
