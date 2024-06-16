@@ -494,7 +494,7 @@ class DodoGame:
             "played": self.__played,
             "starting": self.__starting,
             "updated": False,
-            "game": "gopher",
+            "game": "dodo",
             "first_visit": self.__first_visit,
             "negamax_cache": self.__negamax_cache,
 
