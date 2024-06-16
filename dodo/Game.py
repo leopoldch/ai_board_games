@@ -1,6 +1,6 @@
 """Fichier pour se connecter à la boucle de jeu et répondre"""
 
-from DodoGame import DodoGame
+from dodo.DodoGame import DodoGame
 from typing import Union
 from utils import (
     Environment,
