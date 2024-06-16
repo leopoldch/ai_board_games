@@ -253,20 +253,17 @@ class DodoGame:
             player = self.__current_player
             opponent = 3 - player
 
-            player_pieces = 0
-            opponent_pieces = 0
             player_mobility = 0
             opponent_mobility = 0
             center_control = 0
 
             center_positions = [
-                (0, 0), (-1, 0), (0, -1), (1, 0), (0, 1),
+                (0, 0), (-1, 0), (0, -1), (1, 0), (0, 1), (1, 1), (-1, -1),
                 (-1, 1), (1, -1), (-2, 1), (1, -2), (2, -1), (-1, 2)
             ]
 
             for cell, occupant in self.__grid.items():
                 if occupant == player:
-                    player_pieces += 1
                     if cell in center_positions:
                         center_control += 1
                     player_mobility += sum(
@@ -275,7 +272,6 @@ class DodoGame:
                             (cell[0] + direction[0], cell[1] + direction[1])] == 0
                     )
                 elif occupant == opponent:
-                    opponent_pieces += 1
                     if cell in center_positions:
                         center_control -= 1
                     opponent_mobility += sum(
@@ -284,19 +280,19 @@ class DodoGame:
                             (cell[0] + direction[0], cell[1] + direction[1])] == 0
                     )
 
-            piece_advantage = player_pieces - opponent_pieces
             mobility_advantage = player_mobility - opponent_mobility
             #race_turn = self.race_turn_left(opponent) - self.race_turn_left(player)
 
             # Weight the different components of the evaluation
             evaluation = (
-                    90 * piece_advantage +  # Pieces are very important
                     10 * center_control +  # Control of the center is important
                     5 * mobility_advantage  # Mobility is somewhat important
+                #inclure race turn left après l avoir defini correctement
             )
             #print(evaluation)
 
             return -evaluation
+
 
 
 
