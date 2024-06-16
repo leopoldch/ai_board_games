@@ -236,24 +236,15 @@ class DodoGame:
                         min_distance = steps
                 race_turns += min_distance
         return race_turns
-    def eval(self):
-        if len(self.__legits) == 0:
-            return 1
-        else :
-            my_race_turns = self.race_turn_left()
-            self.set_player(3 - self.__current_player)
-            opponent_race_turns = self.race_turn_left()
-            self.set_player(3 - self.__current_player)
-            if (opponent_race_turns - my_race_turns) > 0:
-                return 1
-            else:
-                return -1
 
     def score(self):
         if len(self.__legits) == 0:
             return 1
         else:
             return -1
+
+    def eval(self):
+        pass
 
 
 
@@ -309,7 +300,7 @@ class DodoGame:
     def __negamax_depth(self) -> int:
         """depth for negamax"""
         if self.__size <= 3: return 12
-        depths: dict[int, int] = {4: 7, 5: 10, 6: 8, 7: 7, 8: 6, 9: 6, 10: 5}
+        depths: dict[int, int] = {4: 8, 5: 10, 6: 8, 7: 7, 8: 6, 9: 6, 10: 5}
         return depths.get(self.__size, 4)
 
     @__negamax_memoize
@@ -361,7 +352,7 @@ class DodoGame:
 
     def __evaluate_negamax(self, player: int) -> float:
         """evaluate func for negamax"""
-        return self.eval() if self.__current_player == player else -self.eval()
+        return self.score() if self.__current_player == player else -self.score()
 
     # ---------------- DEFINITION DES STRATÉGIES ----------------
     # la stratégie utilisée pour jouer est negamax
@@ -494,6 +485,7 @@ def test(iter: int, size: int):
     for _ in range(iter):
         starting_player = 1
         game = DodoGame(size, starting_player)
+        print(game)
 
         while game.final():
             if game.get_player() == 1:
@@ -508,15 +500,15 @@ def test(iter: int, size: int):
         score = game.score()
         if score == 1:
             if game.get_player() == 1: # a changer ptet
-                stats1 += 1  # Si le joueur 1 a le tour mais le score est 1, le joueur 2 a gagné
+                stats1 += 1
             else:
-                stats2 += 1  # Si le joueur 2 a le tour mais le score est 1, le joueur 1 a gagné
+                stats2 += 1
 
     print(f"Temps d'exécution pour {iter} itérations : {time.time() - tps1:.4f} secondes")
     print(f"Nombre de parties gagnées pour le joueur 1: {(stats1 / iter) * 100:.2f}%")
     print(f"Nombre de parties gagnées pour le joueur 2: {(stats2 / iter) * 100:.2f}%")
 
 
-# Exemple d'appel de la fonction de test
-test(100, 4)  # Remplacez 10 par le nombre d'itérations souhaité et 4 par la taille du plateau souhaitée
+
+test(50, 4)
 
