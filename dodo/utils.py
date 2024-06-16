@@ -1,7 +1,7 @@
-from typing import Union, Optional
+"""fichier de fonctions utilitaires"""
+
+from typing import Union
 import os
-import math
-import random
 
 Environment = dict
 Cell = tuple[int, int]
@@ -12,17 +12,17 @@ Player = int
 State = list[tuple[Cell, Player]]
 Score = int
 Time = int
-Grid = dict[Cell:Player]
+Grid = dict[Cell, Player]
 
 
 # Utilitary functions :
 
 def clear():
     """Efface la console"""
-    if os.name == 'nt':  # Pour Windows
-        os.system('cls')
+    if os.name == "nt":  # Pour Windows
+        os.system("cls")
     else:  # Pour Unix/Linux/MacOS
-        os.system('clear')
+        os.system("clear")
 
 
 def str_red(text: str) -> str:
@@ -52,67 +52,43 @@ def grid_to_state(grid: Grid) -> State:
 
 
 def memoize(func):
+    """memoize function (cache) for min max"""
     cache = {}
 
     def memoized_func(self, depth=3):
+        """logique pour memoize avec symétries"""
         key = tuple((pos, val) for pos, val in self.get_grid().items())
         if key in cache and self.is_legit(cache[key][1]):
-            # print("accessed cache successfully", self.is_legit(cache[key][1]),cache[key][1], f'length : {len(cache)}')
             return cache[key]
         result = func(self, depth)
         tup: Cell = result[1]
-        eval: int = result[0]
-        if tup != None:
+        evaluation: int = result[0]
+        if tup is not None:
             cache[key] = result
-            # symétries horizontales et verticales
-            t1: Grid = self.get_grid()
-            s1 = invert_grid_h(t1)
-            r1 = invert_coord_h(tup)
-            r1 = (eval, r1)
-            key = tuple((pos, val) for pos, val in s1.items())
-            cache[key] = r1
 
-            s2 = invert_grid_v(s1)
-            r2 = invert_coord_v(r1[1])
-            r2 = (eval, r2)
-            key = tuple((pos, val) for pos, val in s2.items())
-            cache[key] = r2
+            # 12 symmetries
+            symmetries = [
+                lambda x, y: (x, y),  # Identity
+                lambda x, y: (-y, x + y),  # 60° rotation
+                lambda x, y: (-(x + y), x),  # 120° rotation
+                lambda x, y: (-x, -y),  # 180° rotation
+                lambda x, y: (y, -(x + y)),  # 240° rotation
+                lambda x, y: (x + y, -x),  # 300° rotation
+                lambda x, y: (-x, y),  # Horizontal reflection
+                lambda x, y: (x, -y),  # Vertical reflection
+                lambda x, y: (-y, -(x + y)),  # 60° rotation + vertical reflection
+                lambda x, y: (-(x + y), -y),  # 120° rotation + horizontal reflection
+                lambda x, y: (y, x + y),  # 240° rotation + vertical reflection
+                lambda x, y: (x + y, y),  # 300° rotation + horizontal reflection
+            ]
 
-            s3 = invert_grid_h(s2)
-            r3 = invert_coord_h(r2[1])
-            r3 = (eval, r3)
-            key = tuple((pos, val) for pos, val in s3.items())
-            cache[key] = r3
-
-            s4 = invert_grid_v(s3)
-            r4 = invert_coord_v(r3[1])
-            r4 = (eval, r4)
-            key = tuple((pos, val) for pos, val in s4.items())
-            cache[key] = r4
-
-            s1 = invert_grid_v(t1)
-            r1 = invert_coord_v(tup)
-            r1 = (eval, r1)
-            key = tuple((pos, val) for pos, val in s1.items())
-            cache[key] = r1
-
-            s2 = invert_grid_h(s1)
-            r2 = invert_coord_h(r1[1])
-            r2 = (eval, r2)
-            key = tuple((pos, val) for pos, val in s2.items())
-            cache[key] = r2
-
-            s3 = invert_grid_v(s2)
-            r3 = invert_coord_v(r2[1])
-            r3 = (eval, r3)
-            key = tuple((pos, val) for pos, val in s3.items())
-            cache[key] = r3
-
-            s4 = invert_grid_h(s3)
-            r4 = invert_coord_h(r3[1])
-            r4 = (eval, r4)
-            key = tuple((pos, val) for pos, val in s4.items())
-            cache[key] = r4
+            for sym in symmetries:
+                sym_grid = {
+                    sym(x, y): player for (x, y), player in self.get_grid().items()
+                }
+                sym_tup = sym(*tup)
+                sym_key = tuple((pos, val) for pos, val in sym_grid.items())
+                cache[sym_key] = (evaluation, sym_tup)
 
         return result
 
@@ -143,9 +119,24 @@ def invert_grid_v(grid: Grid) -> Grid:
     return new_grid
 
 
+def rotate_coord(cell: Cell) -> Cell:
+    """rotate une coordonnée"""
+    # (y,-x+y)
+    return (cell[1], -cell[0] + cell[1])
+
+
+def rotate_grid(grid: Grid) -> Grid:
+    """rotate grid 60 degrees"""
+    new_grid: Grid = {}
+    for cell in grid:
+        new_grid[rotate_coord(cell)] = grid[cell]
+    return new_grid
+
+
 def rang(x, y) -> int:
+    """trouver le rang sur une grille d'une case"""
     value: int = 0
-    if (x <= 0 and y >= 0) or (y <= 0 and x >= 0):
+    if x * y <= 0:  # if (x <= 0 and y >= 0) or (y <= 0 and x >= 0):
         value = abs(x) + abs(y)
     elif x < 0 and y < 0:
         value = max(-x, -y)
@@ -155,9 +146,27 @@ def rang(x, y) -> int:
     return value
 
 
-def rotate_grid(grid: Grid) -> None:
-    for tup in grid:
-        x: int = tup[0]
-        y: int = tup[1]
-        value: int = rang(x, y)
-        print(value)
+def do_all_symetries(grid: Grid) -> list[Grid]:
+    """Retourne toutes les symétries essentielles"""
+    all_grids = []
+    already_added = set()
+
+    def add_grid(g: Grid):
+        h = tuple(sorted(g.items()))
+        if h not in already_added:
+            already_added.add(h)
+            all_grids.append(g)
+
+    add_grid(grid)
+    tmp = grid
+    for _ in range(5):
+        tmp = rotate_grid(tmp)
+        add_grid(tmp)
+        add_grid(invert_grid_h(tmp))
+        add_grid(invert_grid_v(tmp))
+    return all_grids
+
+
+def get_state_negamax(grid: Grid) -> tuple:
+    """Renvoie un state hashable pour negamax"""
+    return tuple(sorted(grid.items()))
