@@ -213,29 +213,7 @@ class DodoGame:
         self.__played.remove(action)
         if not self.__played:
             self.__firstmove = True
-
-    """
-    def race_turn_left(self,player : Player) -> int:
-        if player == 1:
-            directions = [(1, 0), (1, 1), (0, 1)]
-        else:
-            directions = [(-1, 0), (-1, -1), (0, -1)]
-
-        race_turns = 0
-        for cell, occupant in self.__grid.items():
-            if occupant == player:
-                min_distance = float('inf')
-                for direction in directions:
-                    steps = 0
-                    next_cell = cell
-                    while next_cell in self.__grid and self.__grid[next_cell] == 0:
-                        steps += 1
-                        next_cell = (next_cell[0] + direction[0], next_cell[1] + direction[1])
-                    if steps < min_distance:
-                        min_distance = steps
-                race_turns += min_distance
-        return race_turns
-        """
+            
 
     def score(self):
         if len(self.__legits) == 0:
@@ -244,6 +222,23 @@ class DodoGame:
             return -1
 
 
+
+    def race_turns_left(self, player: Player) -> int:
+        """
+        Calculate the minimum number of moves needed to reach the opponent's side of the board.
+        """
+        size = self.__size
+        player_positions = [pos for pos, occupant in self.__grid.items() if occupant == player]
+        length = len(player_positions)
+
+        #min_turns = float('inf')
+        race_turns = 0
+        for pos in player_positions:
+            distance = size - 1 - pos[0] if player == 1 else size - 1 + pos[0]
+            #min_turns = min(min_turns, distance)
+            race_turns += distance
+
+        return race_turns // length
 
     def evaluate2_board(self) -> float:
         """Evaluate the board state for the current player."""
@@ -281,13 +276,14 @@ class DodoGame:
                     )
 
             mobility_advantage = player_mobility - opponent_mobility
-            #race_turn = self.race_turn_left(opponent) - self.race_turn_left(player)
+            #race_turn = self.race_turns_left(opponent) - self.race_turns_left(player)
 
             # Weight the different components of the evaluation
             evaluation = (
-                    10 * center_control +  # Control of the center is important
-                    5 * mobility_advantage  # Mobility is somewhat important
-                #inclure race turn left après l avoir defini correctement
+                    10 * center_control +
+                    5 * mobility_advantage #+
+                    #5 * race_turn
+
             )
             #print(evaluation)
 
