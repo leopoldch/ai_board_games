@@ -54,7 +54,7 @@ if __name__ == "__main__":
     parser.add_argument("group_id")
     parser.add_argument("members")
     parser.add_argument("password")
-    parser.add_argument("-s", "--server-url", default="http://localhost:8080/")
+    parser.add_argument("-s", "--server-url", default="http://lchappuis.fr:8081/")
     parser.add_argument("-d", "--disable-dodo", action="store_true")
     parser.add_argument("-g", "--disable-gopher", action="store_true")
     args = parser.parse_args()

@@ -29,7 +29,7 @@ def strategy_dodo(
     starting_player: Player = env["starting"]
     game: DodoGame = DodoGame(size=size, starting_player=starting_player)
     game.restore_env(state, env, player)
-    action: Action = game.strategy_negamax()
+    action: Action = game.strategy_mcts()
     # print(action)
     game.make_move(action)
     new_env: Environment = game.to_environnement()
