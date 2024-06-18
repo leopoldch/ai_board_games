@@ -248,46 +248,46 @@ class DodoGame:
             player = self.__current_player
             opponent = 3 - player
 
-            player_mobility = 0
-            opponent_mobility = 0
+            #player_mobility = 0
+            #opponent_mobility = 0
             center_control = 0
 
-            center_positions = [
-                (0, 0), (-1, 0), (0, -1), (1, 0), (0, 1), (1, 1), (-1, -1),
-                (-1, 1), (1, -1), (-2, 1), (1, -2), (2, -1), (-1, 2)
-            ]
+            center_positions = [(0, 0), (-1, 0), (0, -1), (1, 0), (0, 1), (1, 1), (-1, -1),
+                                (-1, 1), (1, -1), (-2, 1), (1, -2), (2, -1), (-1, 2)]
 
             for cell, occupant in self.__grid.items():
                 if occupant == player:
                     if cell in center_positions:
                         center_control += 1
+                        """
                     player_mobility += sum(
                         1 for direction in [(1, 0), (1, 1), (0, 1)]
                         if (cell[0] + direction[0], cell[1] + direction[1]) in self.__grid and self.__grid[
-                            (cell[0] + direction[0], cell[1] + direction[1])] == 0
-                    )
+                            (cell[0] + direction[0], cell[1] + direction[1])] == 0)"""
                 elif occupant == opponent:
                     if cell in center_positions:
                         center_control -= 1
+                        """
                     opponent_mobility += sum(
                         1 for direction in [(-1, 0), (-1, -1), (0, -1)]
                         if (cell[0] + direction[0], cell[1] + direction[1]) in self.__grid and self.__grid[
-                            (cell[0] + direction[0], cell[1] + direction[1])] == 0
-                    )
+                            (cell[0] + direction[0], cell[1] + direction[1])] == 0)"""
+            player_mobility = len(self.get_legits())
+            self.set_player(opponent)
+            opponent_mobility = len(self.get_legits())
+            self.set_player(player)
+            mobility_advantage = opponent_mobility - player_mobility
+            race_turn = self.race_turns_left(opponent) - self.race_turns_left(player)
 
-            mobility_advantage = player_mobility - opponent_mobility
-            #race_turn = self.race_turns_left(opponent) - self.race_turns_left(player)
-
-            # Weight the different components of the evaluation
+            # poids
             evaluation = (
-                    10 * center_control +
-                    5 * mobility_advantage #+
-                    #5 * race_turn
-
+                    - 10 * center_control +
+                    5 * mobility_advantage +
+                    2.5 * race_turn
             )
             #print(evaluation)
 
-            return -evaluation
+            return evaluation
 
 
 
