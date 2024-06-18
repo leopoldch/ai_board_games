@@ -247,30 +247,30 @@ class DodoGame:
         else:
             player = self.__current_player
             opponent = 3 - player
-            center_control = 0
+            center = 0
 
-            center_positions = [(0, 0), (-1, 0), (0, -1), (1, 0), (0, 1), (1, 1), (-1, -1),
+            position_importantes = [(0, 0), (-1, 0), (0, -1), (1, 0), (0, 1), (1, 1), (-1, -1),
                                 (-1, 1), (1, -1), (-2, 1), (1, -2), (2, -1), (-1, 2)]
 
             for cell, occupant in self.__grid.items():
                 if occupant == player:
-                    if cell in center_positions:
-                        center_control += 1
+                    if cell in positions_importantes:
+                        center += 1
                 elif occupant == opponent:
-                    if cell in center_positions:
-                        center_control -= 1
+                    if cell in positions_importantes:
+                        center -= 1
                         
-            player_mobility = len(self.get_legits())
+            player_legits = len(self.get_legits())
             self.set_player(opponent)
-            opponent_mobility = len(self.get_legits())
+            opponent_legits = len(self.get_legits())
             self.set_player(player)
-            mobility_advantage = opponent_mobility - player_mobility
+            diff_legits = opponent_legits - player_legits
             race_turn = self.race_turns_left(opponent) - self.race_turns_left(player)
 
             # poids
             evaluation = (
-                    - 10 * center_control +
-                    5 * mobility_advantage +
+                    - 10 * center +
+                    5 * diff_legits +
                     2.5 * race_turn
             )
             #print(evaluation)
