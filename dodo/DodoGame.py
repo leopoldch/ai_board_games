@@ -247,9 +247,6 @@ class DodoGame:
         else:
             player = self.__current_player
             opponent = 3 - player
-
-            #player_mobility = 0
-            #opponent_mobility = 0
             center_control = 0
 
             center_positions = [(0, 0), (-1, 0), (0, -1), (1, 0), (0, 1), (1, 1), (-1, -1),
@@ -259,19 +256,10 @@ class DodoGame:
                 if occupant == player:
                     if cell in center_positions:
                         center_control += 1
-                        """
-                    player_mobility += sum(
-                        1 for direction in [(1, 0), (1, 1), (0, 1)]
-                        if (cell[0] + direction[0], cell[1] + direction[1]) in self.__grid and self.__grid[
-                            (cell[0] + direction[0], cell[1] + direction[1])] == 0)"""
                 elif occupant == opponent:
                     if cell in center_positions:
                         center_control -= 1
-                        """
-                    opponent_mobility += sum(
-                        1 for direction in [(-1, 0), (-1, -1), (0, -1)]
-                        if (cell[0] + direction[0], cell[1] + direction[1]) in self.__grid and self.__grid[
-                            (cell[0] + direction[0], cell[1] + direction[1])] == 0)"""
+                        
             player_mobility = len(self.get_legits())
             self.set_player(opponent)
             opponent_mobility = len(self.get_legits())
