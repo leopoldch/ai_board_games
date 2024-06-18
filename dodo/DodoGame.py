@@ -249,7 +249,7 @@ class DodoGame:
             opponent = 3 - player
             center = 0
 
-            position_importantes = [(0, 0), (-1, 0), (0, -1), (1, 0), (0, 1), (1, 1), (-1, -1),
+            positions_importantes = [(0, 0), (-1, 0), (0, -1), (1, 0), (0, 1), (1, 1), (-1, -1),
                                 (-1, 1), (1, -1), (-2, 1), (1, -2), (2, -1), (-1, 2)]
 
             for cell, occupant in self.__grid.items():
