@@ -197,7 +197,7 @@ class DodoGame:
         else:
             return -1
 
-    def race_turns_left(self, player: Player) -> int:
+    def race_turns_left(self, player: Player) -> float:
         """
         Calculate the minimum number of moves needed to reach the opponent's side of the board.
         """
@@ -210,7 +210,7 @@ class DodoGame:
             distance = size - 1 - pos[0] if player == 1 else size - 1 + pos[0]
             race_turns += distance
 
-        return race_turns // length
+        return race_turns / length
 
     def evaluate2_board(self) -> float:
         """Evaluate the board state for the current player."""
