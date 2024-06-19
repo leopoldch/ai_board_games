@@ -253,59 +253,59 @@ class DodoGame:
         if self.__legits:
             return True
         return False
-
-    def strategy_mc(self, nb_iter: int = 1000) -> Action:
+        
+    def strategy_mc(self, nb_iterations: int = 1000) -> Action:
         """Monte Carlo strategy"""
         self.__verify_update()
         if len(self.__legits) == 1:
             return self.__legits[0]
 
-        best_value: float = -float('inf')
-        best_action: Action = None
+        valeur_optimale: float = -float('inf')
+        action_optimale: Action = None
 
         for action in self.__legits:
-            gain: float = 0.0
-            victoire_rouge: int = 0
-            victoire_bleu: int = 0
+            recompense: float = 0.0
+            victoire_joueur1: int = 0
+            victoire_joueur2: int = 0
 
-            for _ in range(nb_iter // (len(self.__legits) + 1)):
-                stack = deque()
-                stack.append(action)
+            for _ in range(nb_iterations // (len(self.__legits) + 1)):
+                pile = deque()
+                pile.append(action)
                 self.make_move(action)
                 self.set_player(3 - self.get_player())
 
                 while self.final():
                     tmp_action: Action = self.strategy_random()
                     if self.is_legit(tmp_action):
-                        stack.append(tmp_action)
+                        pile.append(tmp_action)
                         self.make_move(tmp_action)
                         self.set_player(3 - self.get_player())
 
                 if self.score() == 1:
                     if self.get_player() == 1:
-                        victoire_rouge += 1
+                        victoire_joueur1 += 1
                     else:
-                        victoire_bleu += 1
+                        victoire_joueur2 += 1
                 else:
                     if self.get_player() == 2:
-                        victoire_rouge += 1
+                        victoire_joueur1 += 1
                     else:
-                        victoire_bleu += 1
+                        victoire_joueur2 += 1
 
-                while stack:
-                    self.unmake_move(stack.pop())
+                while pile:
+                    self.unmake_move(pile.pop())
                     self.set_player(3 - self.get_player())
 
             if self.get_player() == 1:
-                gain = victoire_rouge / nb_iter
+                recompense = victoire_joueur1 / nb_iterations
             else:
-                gain = victoire_bleu / nb_iter
+                recompense = victoire_joueur2 / nb_iterations
 
-            if gain > best_value:
-                best_value = gain
-                best_action = action
+            if recompense > valeur_optimale:
+                valeur_optimale = recompense
+                action_optimale = action
 
-        return best_action
+        return action_optimale
 
     def __negamax_memoize(func):
         """Cache pour negamax"""
