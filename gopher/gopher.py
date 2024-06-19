@@ -30,15 +30,15 @@ from gopher.utils import (
 
 class GopherGame:
     """classe du jeu gopher"""
-    
+
     # --------------- DESCRIPTION FONCTIONNEMENT ---------------
 
     # l'accès à un attribut dans un dictionnaire python (hash table)
     # est en O(1) c'est pour ça que dans le code il y a souvent
     # self.__grid.get(key)
-    # ce qui prend du temps n'est pas le fonctionnement de jeu 
+    # ce qui prend du temps n'est pas le fonctionnement de jeu
     # mais bien l'exploration du graphe avec Negamax
-    # Pour contrer cette explosion algorithmique 
+    # Pour contrer cette explosion algorithmique
     # il y a un élagage alpha beta, un cache qui enregistre les
     # grilles déjà explorées
     # Les symétries ne sont pas efficaces
@@ -142,50 +142,6 @@ class GopherGame:
                     neighbors.append(key)
         return neighbors
 
-    """ 
-    
-    pas utilisé pour Negamax 
-    
-    def __evaluate(self, _) -> float:
-        '''Evaluate the potential of a move.'''
-        score = 0
-        self.__legit_moves()
-        if len(self.get_legits()) == 0:
-            score = 100
-        elif len(self.get_legits()) == 1:
-            score = 50
-        else:
-            future_moves = len(self.get_legits())
-            if future_moves > 3:
-                score += 1
-            elif future_moves == 3:
-                score += 2
-            else:
-                score += 3
-        return -score
-
-    def __evaluate_move(self, cell : Cell) -> float:
-        '''Evaluate the potential of a move v2'''
-        self.make_move(cell)
-        score = 0
-        self.__legit_moves()
-        if len(self.get_legits()) == 0:
-            score = 100
-        elif len(self.get_legits()) == 1:
-            score = 50
-        else:
-            future_moves = len(self.get_legits())
-            if future_moves > 3:
-                score += 1
-            elif future_moves == 3:
-                score += 2
-            else:
-                score += 3
-        self.__unmake_move(cell)
-        return score
-    
-    """
-    
     def is_legit(self, start: Cell) -> bool:
         """returns if move is legit or not"""
         if self.__firstmove:
@@ -231,7 +187,7 @@ class GopherGame:
         self.__played.append(cell)
 
     def __unmake_move(self, cell: Cell) -> None:
-        '''unplay item on grid'''
+        """unplay item on grid"""
         self.__grid[cell] = 0
         self.__updated = False
         self.__legits = []
@@ -255,163 +211,62 @@ class GopherGame:
             return True
         return False
 
-
-    """ Les algos ci-dessous ne sont pas utilisés
-
-    # ----------------------- ALGO MIN-MAX -----------------------
-
-    # @memoize ralenti
-    def __minmax_action(self, depth: int = 0) -> tuple[float, Action]:
-        '''Minimax func.'''
-        best: tuple[float, Action]
-        self.__verify_update()
-
-        if depth == 0 or not self.__legits:
-            return (
-                self.score(),
-                (-100, -100),
-            )  # on admet qu'il n'y a pas de case (-100,-100) dans une grille
-
-        original_grid = self.__grid.copy()  # Copie la grid départ
-
-        if self.__current_player == 1:
-            best_value = float("-inf")
-            for move in self.__legits:
-                self.make_move(move)
-                self.set_player(2)
-                score, _ = self.__minmax_action(depth - 1)
-                move_score = self.__evaluate(move)
-                total_score = score + move_score
-                if total_score > best_value:
-                    best_value = total_score
-                    best = (total_score, move)
-                self.__grid = original_grid.copy()  # Remet la grid départ
-                self.set_player(1)
-            return best
-
-        if self.__current_player == 2:
-            best_value = float("inf")
-            for move in self.__legits:
-                self.make_move(move)
-                self.set_player(1)
-                score, _ = self.__minmax_action(depth - 1)
-                move_score = self.__evaluate(move)
-                total_score = score + move_score
-                if total_score < best_value:
-                    best_value = total_score
-                    best = (total_score, move)
-                self.__grid = original_grid.copy()  # Remet la grid départ
-                self.set_player(2)
-            return best
-
-        raise ValueError("Joueur inconnu")
-
-    # --------------------- ALGO ALPHA-BETA ----------------------
-
-    def __alpha_beta_action(
-        self, depth: int = 0, alpha: float = float("-inf"), beta: float = float("inf")
-    ) -> tuple[float, Action]:
-        '''Alpha-beta func'''
-        self.__verify_update()
-        best: tuple[float, Action]
-
-        if depth == 0 or not self.__legits:
-            return (
-                self.score(),
-                (-100, -100),
-            )  # on admet qu'il n'y a pas de case (-100,-100) dans une grille
-
-        original_grid = self.__grid.copy()  # Copie la grid départ
-
-        if self.__current_player == 1:
-            best_value = float("-inf")
-            for move in self.__legits:
-                self.make_move(move)
-                self.set_player(2)
-                score, _ = self.__alpha_beta_action(depth - 1, best_value, beta)
-                # Use evaluate to assess the move
-                move_score = self.__evaluate(move)
-                total_score = score + move_score
-                if total_score > best_value:
-                    best_value = total_score
-                    best = (total_score, move)
-                self.__grid = original_grid.copy()  # Remet la grid départ
-                self.set_player(1)
-                if best_value >= beta:
-                    break  # Coupure bêta
-            return best
-
-        if self.__current_player == 2:
-            best_value = float("inf")
-            for move in self.__legits:
-                self.make_move(move)
-                self.set_player(1)
-                score, _ = self.__alpha_beta_action(depth - 1, alpha, best_value)
-                move_score = self.__evaluate(move)
-                total_score = score + move_score
-                if total_score < best_value:
-                    best_value = total_score
-                    best = (total_score, move)
-                self.__grid = original_grid.copy()  # Remet la grid départ
-                self.set_player(2)
-                if best_value <= alpha:
-                    break  # Coupure alpha
-            return best
-
-        raise ValueError("Joueur inconnu")
-
-    """
-
     # ----------------------- ALGO NEGAMAX -----------------------
 
+    def __negamax_depth(self) -> int:
+        """depth for negamax"""
+        length: int = len(self.__played)
+        print(length)
+        if self.__size <= 3:
+            return 15
+        if self.__size == 5 and length > 20:
+            return 100
+        if self.__size == 6 and length > 33:
+            return 100
+        # aller au fond de l'arbre en fin de partie
+        depths: dict[int, int] = {4: 1000, 5: 12, 6: 9, 7: 9, 8: 6, 9: 5, 10: 4}
+        return depths.get(self.__size, 3)
 
+    @staticmethod
     def __negamax_memoize(func):
         """Cache pour negamax"""
 
         def memoized_func(self, depth: int, alpha: float, beta: float, player: int):
             """wrapped func"""
-            self.__verify_update()
-            state = get_state_negamax(self.__grid)
-            
-            if state in self.__negamax_cache:
-                    cached_entry = self.__negamax_cache[state]
-                    if cached_entry["depth"] >= depth:
-                        if cached_entry["flag"] == "exact":
-                            return cached_entry["value"]
-                        elif cached_entry["flag"] == "lowerbound" and cached_entry["value"] > alpha:
-                            alpha = cached_entry["value"]
-                        elif cached_entry["flag"] == "upperbound" and cached_entry["value"] < beta:
-                            beta = cached_entry["value"]
-                        if alpha >= beta:
-                            return cached_entry["value"]
-            
+            state = get_state_negamax(self.get_grid())
+
+            if state in self.get_negamax_cache():
+                cached_entry = self.get_negamax_cache()[state]
+                if cached_entry["depth"] >= depth:
+                    if cached_entry["flag"] == "exact":
+                        return cached_entry["value"]
+                    if (
+                        cached_entry["flag"] == "lowerbound"
+                        and cached_entry["value"] > alpha
+                    ):
+                        alpha = cached_entry["value"]
+                    if (
+                        cached_entry["flag"] == "upperbound"
+                        and cached_entry["value"] < beta
+                    ):
+                        beta = cached_entry["value"]
+                    if alpha >= beta:
+                        return cached_entry["value"]
+
             max_eval = func(self, depth, alpha, beta, player)
-            
+
             flag = "exact"
             if max_eval <= alpha:
                 flag = "upperbound"
             elif max_eval >= beta:
                 flag = "lowerbound"
-            
-            if state not in self.__negamax_cache or self.__negamax_cache[state]["depth"] < depth:
-                self.__negamax_cache[state] = {
-                        "value": max_eval,
-                        "depth": depth,
-                        "flag": flag
-                    }
-            return max_eval  
-        return memoized_func
 
-    def __negamax_depth(self) -> int:
-        """depth for negamax"""
-        length : int = len(self.__played)
-        print(length)
-        if self.__size <= 3: return 15
-        if self.__size == 5 and length>20: return 100
-        if self.__size == 6 and length>33: return 100 
-        # aller au fond de l'arbre en fin de partie
-        depths : dict[int,int] = {4:1000,5:12,6:9,7:9,8:6,9:5,10:4}
-        return depths.get(self.__size, 3) 
+            cache = self.get_negamax_cache()
+            if state not in cache or cache[state]["depth"] < depth:
+                self.set_negamax_cache(state, max_eval, depth, flag)
+            return max_eval
+
+        return memoized_func
 
     @__negamax_memoize
     def __negamax(self, depth: int, alpha: float, beta: float, player: int) -> float:
@@ -422,9 +277,10 @@ class GopherGame:
             return self.__evaluate_negamax(player)
 
         max_eval = float("-inf")
-        
-        #moves = sorted(self.__legits, key=self.__evaluate_move, reverse=True) # rajoute bcp de complexité
-        
+
+        # moves = sorted(self.__legits, key=self.__evaluate_move, reverse=True)
+        # rajoute bcp de complexité
+
         for move in self.__legits:
             self.make_move(move)
             self.set_player(3 - self.__current_player)
@@ -435,7 +291,7 @@ class GopherGame:
             alpha = max(alpha, eval_value)
             if alpha >= beta:
                 break
-        
+
         return max_eval
 
     def __negamax_action(self, depth: int = 3) -> tuple[float, Cell]:
@@ -446,7 +302,8 @@ class GopherGame:
         beta = float("inf")
 
         player = self.__current_player
-        #moves = sorted(self.__legits, key=self.__evaluate_move, reverse=True) # rajoute bcp de complexité
+        # moves = sorted(self.__legits, key=self.__evaluate_move, reverse=True)
+        # rajoute bcp de complexité
 
         for move in self.__legits:
             self.make_move(move)
@@ -464,11 +321,8 @@ class GopherGame:
         """evaluate func for negamax"""
         return self.score() if self.__current_player == player else -self.score()
 
-
-
-
     # ---------------- DEFINITION DES STRATÉGIES ----------------
-    # la stratégie utilisée pour jouer est negamax 
+    # la stratégie utilisée pour jouer est negamax
     # les autres sont toutes moins efficaces
 
     def strategy_negamax(self) -> Action:
@@ -487,13 +341,13 @@ class GopherGame:
             next_cell: Cell = self.get_direction()
             if next_cell in self.__legits:
                 return next_cell
-            # si c'est pas dans les coups légaux alors on passe sur du négamax 
+            # si c'est pas dans les coups légaux alors on passe sur du négamax
         depth: int = self.__negamax_depth()
-        #print(f"profondeur : {depth} - taille grille : {self.__size}")
+        # print(f"profondeur : {depth} - taille grille : {self.__size}")
         tmp: list[Cell] = self.__played.copy()
         value = self.__negamax_action(depth)[1]
         self.__played = tmp
-        #print(f"cache : {len(self.__negamax_cache)}"if self.__negamax_cache else "no cache" )
+        # print(f"cache : {len(self.__negamax_cache)}"if self.__negamax_cache else "no cache" )
         return value
 
     def strategy_random(self) -> Action:
@@ -504,76 +358,24 @@ class GopherGame:
         value = random.randint(0, len(self.__legits) - 1)
         return self.__legits[value]
 
-    """ Les stratégies ci-dessous ne sont pas utilisées
-    
-    def strategy_minmax(self) -> Action:
-        '''strategy de jeu avec minmax'''
-        length: int = len(self.__played)
-        if self.__firstmove and self.__size % 2 == 1:
-            return (0, 0)
-        if self.__firstmove and self.__size % 2 == 0:
-            return (0, self.__size - 1)
-        if (
-            length > 1
-            and self.__starting == self.__current_player
-            and self.__size % 2 == 1
-        ):
-            length -= 1
-            next_cell: Cell = self.get_direction()
-            if next_cell in self.__legits:
-                return next_cell
-        tmp: list[Cell] = self.__played.copy()
-        value: Action = self.__minmax_action(3)[1]
-        self.__played = tmp
-        return value
-
-    def strategy_mcts(self) -> Optional[Action]:
-        '''stratégie MCTS'''
-        length = len(self.__played)
-        if self.__firstmove and self.__size % 2 == 1:
-            return (0, 0)
-        if self.__firstmove and self.__size % 2 == 0:
-            return (0, self.__size - 1)
-        if (
-            length > 1
-            and self.__starting == self.__current_player
-            and self.__size % 2 == 1
-        ):
-            length -= 1
-            next_cell = self.get_direction()
-            if next_cell in self.__legits:
-                return next_cell
-        tmp: list[Cell] = self.__played.copy()
-        value: Optional[Action] = mcts(self)
-        self.__played = tmp
-        return value
-
-    def strategy_alpha_beta(self) -> Action:
-        '''strategy de jeu avec alpha-beta'''
-        length: int = len(self.__played)
-
-        if self.__firstmove:
-            if self.__size % 2 == 1:
-                return (0, 0)
-            return (0, self.__size - 1)
-        if (
-            length > 1
-            and self.__starting == self.__current_player
-            and self.__size % 2 == 1
-        ):
-            length -= 1
-            next_cell: Cell = self.get_direction()
-            if next_cell in self.__legits:
-                return next_cell
-        tmp_played: list[Cell] = self.__played.copy()
-        value: Action = self.__alpha_beta_action(3)[1]
-        self.__played = tmp_played
-        return value
-
-    """
-
     # ---------------- GETTER ET SETTERS PUBLICS ----------------
-    
+
+    def get_grid(self):
+        """getter de grid"""
+        return self.__grid
+
+    def get_negamax_cache(self):
+        """get negamax cache"""
+        return self.__negamax_cache
+
+    def set_negamax_cache(self, state, value, depth, flag):
+        """setter de cache"""
+        self.__negamax_cache[state] = {
+            "value": value,
+            "depth": depth,
+            "flag": flag,
+        }
+
     def get_player(self) -> Player:
         """getter pour l'attribut joueur actuel"""
         return self.__current_player
@@ -596,10 +398,10 @@ class GopherGame:
 
     def get_direction(self) -> Cell:
         """fonction pour avoir la direction en cas de grille impair"""
-        
-        # sur unr grille impair un simple calcul permet 
+
+        # sur unr grille impair un simple calcul permet
         # de trouver le meilleur coup
-        
+
         last: Cell = self.__played[-1]
         value = self.__grid[last]
         verif = 0
@@ -630,7 +432,7 @@ class GopherGame:
             "starting": self.__starting,
             "updated": self.__updated,
             "first_visit": self.__first_visit,
-            "negamax_cache" : self.__negamax_cache,
+            "negamax_cache": self.__negamax_cache,
         }
 
     def restore_state(self, state: dict) -> None:
@@ -659,8 +461,7 @@ class GopherGame:
             "updated": False,
             "game": "gopher",
             "first_visit": self.__first_visit,
-            "negamax_cache" : self.__negamax_cache,
-
+            "negamax_cache": self.__negamax_cache,
         }
 
     def restore_env(self, state: State, env: Environment, current: Player) -> None:

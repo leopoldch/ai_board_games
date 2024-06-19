@@ -1,0 +1,15 @@
+[MASTER]
+
+extension-pkg-whitelist=
+ignore=
+persistent=yes
+load-plugins=
+
+[MESSAGES CONTROL]
+# Désactiver certaines erreurs d'import
+disable=
+    E0401,  # Unable to import
+    E0611   # No name in module
+
+[REPORTS]
+reports=yes

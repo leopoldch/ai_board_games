@@ -1,0 +1,215 @@
+""" 
+    pas utilisé pour Negamax 
+    
+    def __evaluate(self, _) -> float:
+        '''Evaluate the potential of a move.'''
+        score = 0
+        self.__legit_moves()
+        if len(self.get_legits()) == 0:
+            score = 100
+        elif len(self.get_legits()) == 1:
+            score = 50
+        else:
+            future_moves = len(self.get_legits())
+            if future_moves > 3:
+                score += 1
+            elif future_moves == 3:
+                score += 2
+            else:
+                score += 3
+        return -score
+
+    def __evaluate_move(self, cell : Cell) -> float:
+        '''Evaluate the potential of a move v2'''
+        self.make_move(cell)
+        score = 0
+        self.__legit_moves()
+        if len(self.get_legits()) == 0:
+            score = 100
+        elif len(self.get_legits()) == 1:
+            score = 50
+        else:
+            future_moves = len(self.get_legits())
+            if future_moves > 3:
+                score += 1
+            elif future_moves == 3:
+                score += 2
+            else:
+                score += 3
+        self.__unmake_move(cell)
+        return score
+"""
+""" Les algos ci-dessous ne sont pas utilisés
+
+    # ----------------------- ALGO MIN-MAX -----------------------
+
+    # @memoize ralenti
+    def __minmax_action(self, depth: int = 0) -> tuple[float, Action]:
+        '''Minimax func.'''
+        best: tuple[float, Action]
+        self.__verify_update()
+
+        if depth == 0 or not self.__legits:
+            return (
+                self.score(),
+                (-100, -100),
+            )  # on admet qu'il n'y a pas de case (-100,-100) dans une grille
+
+        original_grid = self.__grid.copy()  # Copie la grid départ
+
+        if self.__current_player == 1:
+            best_value = float("-inf")
+            for move in self.__legits:
+                self.make_move(move)
+                self.set_player(2)
+                score, _ = self.__minmax_action(depth - 1)
+                move_score = self.__evaluate(move)
+                total_score = score + move_score
+                if total_score > best_value:
+                    best_value = total_score
+                    best = (total_score, move)
+                self.__grid = original_grid.copy()  # Remet la grid départ
+                self.set_player(1)
+            return best
+
+        if self.__current_player == 2:
+            best_value = float("inf")
+            for move in self.__legits:
+                self.make_move(move)
+                self.set_player(1)
+                score, _ = self.__minmax_action(depth - 1)
+                move_score = self.__evaluate(move)
+                total_score = score + move_score
+                if total_score < best_value:
+                    best_value = total_score
+                    best = (total_score, move)
+                self.__grid = original_grid.copy()  # Remet la grid départ
+                self.set_player(2)
+            return best
+
+        raise ValueError("Joueur inconnu")
+
+    # --------------------- ALGO ALPHA-BETA ----------------------
+
+    def __alpha_beta_action(
+        self, depth: int = 0, alpha: float = float("-inf"), beta: float = float("inf")
+    ) -> tuple[float, Action]:
+        '''Alpha-beta func'''
+        self.__verify_update()
+        best: tuple[float, Action]
+
+        if depth == 0 or not self.__legits:
+            return (
+                self.score(),
+                (-100, -100),
+            )  # on admet qu'il n'y a pas de case (-100,-100) dans une grille
+
+        original_grid = self.__grid.copy()  # Copie la grid départ
+
+        if self.__current_player == 1:
+            best_value = float("-inf")
+            for move in self.__legits:
+                self.make_move(move)
+                self.set_player(2)
+                score, _ = self.__alpha_beta_action(depth - 1, best_value, beta)
+                # Use evaluate to assess the move
+                move_score = self.__evaluate(move)
+                total_score = score + move_score
+                if total_score > best_value:
+                    best_value = total_score
+                    best = (total_score, move)
+                self.__grid = original_grid.copy()  # Remet la grid départ
+                self.set_player(1)
+                if best_value >= beta:
+                    break  # Coupure bêta
+            return best
+
+        if self.__current_player == 2:
+            best_value = float("inf")
+            for move in self.__legits:
+                self.make_move(move)
+                self.set_player(1)
+                score, _ = self.__alpha_beta_action(depth - 1, alpha, best_value)
+                move_score = self.__evaluate(move)
+                total_score = score + move_score
+                if total_score < best_value:
+                    best_value = total_score
+                    best = (total_score, move)
+                self.__grid = original_grid.copy()  # Remet la grid départ
+                self.set_player(2)
+                if best_value <= alpha:
+                    break  # Coupure alpha
+            return best
+
+        raise ValueError("Joueur inconnu")
+
+"""
+
+
+""" Les stratégies ci-dessous ne sont pas utilisées
+    
+    def strategy_minmax(self) -> Action:
+        '''strategy de jeu avec minmax'''
+        length: int = len(self.__played)
+        if self.__firstmove and self.__size % 2 == 1:
+            return (0, 0)
+        if self.__firstmove and self.__size % 2 == 0:
+            return (0, self.__size - 1)
+        if (
+            length > 1
+            and self.__starting == self.__current_player
+            and self.__size % 2 == 1
+        ):
+            length -= 1
+            next_cell: Cell = self.get_direction()
+            if next_cell in self.__legits:
+                return next_cell
+        tmp: list[Cell] = self.__played.copy()
+        value: Action = self.__minmax_action(3)[1]
+        self.__played = tmp
+        return value
+
+    def strategy_mcts(self) -> Optional[Action]:
+        '''stratégie MCTS'''
+        length = len(self.__played)
+        if self.__firstmove and self.__size % 2 == 1:
+            return (0, 0)
+        if self.__firstmove and self.__size % 2 == 0:
+            return (0, self.__size - 1)
+        if (
+            length > 1
+            and self.__starting == self.__current_player
+            and self.__size % 2 == 1
+        ):
+            length -= 1
+            next_cell = self.get_direction()
+            if next_cell in self.__legits:
+                return next_cell
+        tmp: list[Cell] = self.__played.copy()
+        value: Optional[Action] = mcts(self)
+        self.__played = tmp
+        return value
+
+    def strategy_alpha_beta(self) -> Action:
+        '''strategy de jeu avec alpha-beta'''
+        length: int = len(self.__played)
+
+        if self.__firstmove:
+            if self.__size % 2 == 1:
+                return (0, 0)
+            return (0, self.__size - 1)
+        if (
+            length > 1
+            and self.__starting == self.__current_player
+            and self.__size % 2 == 1
+        ):
+            length -= 1
+            next_cell: Cell = self.get_direction()
+            if next_cell in self.__legits:
+                return next_cell
+        tmp_played: list[Cell] = self.__played.copy()
+        value: Action = self.__alpha_beta_action(3)[1]
+        self.__played = tmp_played
+        return value
+
+    """
