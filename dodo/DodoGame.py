@@ -307,7 +307,6 @@ class DodoGame:
 
         return best_action
 
-
     def __negamax_memoize(func):
         """Cache pour negamax"""
 
