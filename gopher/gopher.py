@@ -327,6 +327,9 @@ class GopherGame:
 
     def strategy_negamax(self) -> Action:
         """Stratégie de jeu utilisant Négamax"""
+        self.__verify_update()
+        if len(self.__legits) ==1:
+            return self.__legits[0]
         length: int = len(self.__played)
         if self.__firstmove and self.__size % 2 == 1:
             return (0, 0)

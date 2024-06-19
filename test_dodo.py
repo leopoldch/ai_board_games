@@ -41,7 +41,7 @@ def test_mcts_win_rate(num_games: int, mcts_player) -> float:
 
         while game.final():
             if current_player == mcts_player:
-                action = game.strategy_mcts()
+                action = game.strategy_mc()
             else:
                 action = game.strategy_random()
 
@@ -55,9 +55,11 @@ def test_mcts_win_rate(num_games: int, mcts_player) -> float:
     end_time = time.time()
     elapsed_time = end_time - start_time
     win_rate = (wins / num_games) * 100
-    return win_rate, elapsed_time
+    print(f"win rate : {win_rate}%")
+    print(f"temps : {elapsed_time} ")
 
-print(test_mcts_win_rate(100,1))
+
+test_mcts_win_rate(100,1)
 
 
 #test(10, 4)

@@ -1,0 +1,95 @@
+NOMBRE D'ITERATIONS PAR SIZE ET PAR SIDE DE DEPART : 200
+JOUEUR 1 NEGAMAX - JOUEUR 2 RANDOM
+
+=========================================
+
+taille : 4
+Temps d'éxécution  : 425.3025 secondes
+Temps par partie  : 2.1265 secondes. Max : 3.7865 secondes.
+Nb de win pour le joueur 1: 193 96.50%
+Nb de win pour le joueur 2: 7 3.50%
+
+taille : 5
+Temps d'éxécution  : 0.8874 secondes
+Temps par partie  : 0.0044 secondes. Max : 0.0053 secondes.
+Nb de win pour le joueur 1: 200 100.00%
+Nb de win pour le joueur 2: 0 0.00%
+
+taille : 6
+Temps d'éxécution  : 4702.7754 secondes
+Temps par partie  : 23.5139 secondes. Max : 76.5502 secondes.
+Nb de win pour le joueur 1: 195 97.50%
+Nb de win pour le joueur 2: 5 2.50%
+
+taille : 7
+Temps d'éxécution  : 3.9219 secondes
+Temps par partie  : 0.0196 secondes. Max : 0.0218 secondes.
+Nb de win pour le joueur 1: 200 100.00%
+Nb de win pour le joueur 2: 0 0.00%
+
+taille : 8
+Temps d'éxécution  : 6843.8066 secondes
+Temps par partie  : 34.2190 secondes. Max : 64.8147 secondes.
+Nb de win pour le joueur 1: 190 95.00%
+Nb de win pour le joueur 2: 10 5.00%
+
+taille : 9
+Temps d'éxécution  : 11.7338 secondes
+Temps par partie  : 0.0587 secondes. Max : 0.0643 secondes.
+Nb de win pour le joueur 1: 200 100.00%
+Nb de win pour le joueur 2: 0 0.00%
+
+taille : 10
+Temps d'éxécution  : 6439.6674 secondes
+Temps par partie  : 32.1983 secondes. Max : 59.6236 secondes.
+Nb de win pour le joueur 1: 182 91.00%
+Nb de win pour le joueur 2: 18 9.00%
+
+
+
+JOUEUR 2 NEGAMAX - JOUEUR 1 RANDOM
+
+=========================================
+
+ taille : 4
+Temps d'éxécution  : 885.8309 secondes
+Temps par partie  : 4.4292 secondes. Max : 14.4118 secondes.
+Nb de win pour le joueur 1: 4 2.00%
+Nb de win pour le joueur 2: 196 98.00%
+
+ taille : 5
+Temps d'éxécution  : 2981.5129 secondes
+Temps par partie  : 14.9076 secondes. Max : 139.0612 secondes.
+Nb de win pour le joueur 1: 13 6.50%
+Nb de win pour le joueur 2: 187 93.50%
+
+ taille : 6
+Temps d'éxécution  : 8925.8726 secondes
+Temps par partie  : 44.6294 secondes. Max : 189.6780 secondes.
+Nb de win pour le joueur 1: 5 2.50%
+Nb de win pour le joueur 2: 195 97.50%
+
+ taille : 7
+Temps d'éxécution  : 9297.9952 secondes
+Temps par partie  : 46.4900 secondes. Max : 241.2721 secondes.
+Nb de win pour le joueur 1: 6 3.00%
+Nb de win pour le joueur 2: 194 97.00%
+
+ taille : 8
+Temps d'éxécution  : 9795.2613 secondes
+Temps par partie  : 48.9763 secondes. Max : 188.7375 secondes.
+Nb de win pour le joueur 1: 12 6.00%
+Nb de win pour le joueur 2: 188 94.00%
+
+ taille : 9
+Temps d'éxécution  : 9972.6733 secondes
+Temps par partie  : 49.8634 secondes. Max : 280.9140 secondes.
+Nb de win pour le joueur 1: 5 2.50%
+Nb de win pour le joueur 2: 195 97.50%
+
+ taille : 10
+Temps d'éxécution  : 10307.1499 secondes
+Temps par partie  : 51.5357 secondes. Max : 203.8330 secondes.
+Nb de win pour le joueur 1: 12 6.00%
+Nb de win pour le joueur 2: 188 94.00%
+
