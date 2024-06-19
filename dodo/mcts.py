@@ -10,8 +10,8 @@ class MonteCarloNode:
     """Node for Monte Carlo Tree Search"""
 
     def __init__(self, available_actions: list[tuple[Cell, Cell]], player: Player, parent_node=None, parent_action=None):
-        self.parent_node: MonteCarloNode = parent_node
         self.current_player: Player = player
+        self.parent_node: MonteCarloNode = parent_node
         self.parent_action: tuple[Cell, Cell] = parent_action
         self.child_nodes: list[MonteCarloNode] = []
         self.visits: int = 0
