@@ -17,6 +17,7 @@ Grid = dict[Cell, Player]
 
 # Utilitary functions :
 
+
 def clear():
     """Efface la console"""
     if os.name == "nt":  # Pour Windows
@@ -24,13 +25,16 @@ def clear():
     else:  # Pour Unix/Linux/MacOS
         os.system("clear")
 
+
 def str_red(text: str) -> str:
     """print text in red"""
     return "\033[31m" + text + "\033[0m"
 
+
 def str_blue(text: str) -> str:
     """print text in blue"""
     return "\033[34m" + text + "\033[0m"
+
 
 def state_to_grid(state: State) -> Grid:
     """convert grid to state"""
@@ -39,12 +43,14 @@ def state_to_grid(state: State) -> Grid:
         grid[item[0]] = item[1]
     return grid
 
+
 def grid_to_state(grid: Grid) -> State:
     """convert state to grid"""
     state: State = []
     for item, key in grid.items():
         state.append((item, key))
     return state
+
 
 def memoize(func):
     """memoize function (cache) for min max"""
@@ -89,30 +95,38 @@ def memoize(func):
 
     return memoized_func
 
-def invert_coord_h(cell : Cell) -> Cell:
-    return (-cell[0],-cell[1])
 
-def invert_coord_v(cell : Cell) -> Cell:
-    return (cell[1],cell[0])
+def invert_coord_h(cell: Cell) -> Cell:
+    """inverser les coordonées horizontalement"""
+    return (-cell[0], -cell[1])
 
-def invert_grid_h(grid : Grid) -> Grid:
+
+def invert_coord_v(cell: Cell) -> Cell:
+    """inverser les coordonées verticalement"""
+    return (cell[1], cell[0])
+
+
+def invert_grid_h(grid: Grid) -> Grid:
     """invert grid horizontally"""
-    new_grid : Grid = {}
+    new_grid: Grid = {}
     for tup in grid:
         new_grid[invert_coord_h(tup)] = grid[tup]
     return new_grid
 
-def invert_grid_v(grid : Grid) -> Grid:
+
+def invert_grid_v(grid: Grid) -> Grid:
     """invert grid horizontally"""
-    new_grid : Grid = {}
+    new_grid: Grid = {}
     for tup in grid:
         new_grid[invert_coord_v(tup)] = grid[tup]
     return new_grid
 
+
 def rotate_coord(cell: Cell) -> Cell:
     """rotate une coordonnée"""
-    #(y,-x+y)
+    # (y,-x+y)
     return (cell[1], -cell[0] + cell[1])
+
 
 def rotate_grid(grid: Grid) -> Grid:
     """rotate grid 60 degrees"""
@@ -120,6 +134,7 @@ def rotate_grid(grid: Grid) -> Grid:
     for cell in grid:
         new_grid[rotate_coord(cell)] = grid[cell]
     return new_grid
+
 
 def rang(x, y) -> int:
     """trouver le rang sur une grille d'une case"""
@@ -132,6 +147,7 @@ def rang(x, y) -> int:
         value = max(x, y)
     value = abs(value)
     return value
+
 
 def do_all_symetries(grid: Grid) -> list[Grid]:
     """Retourne toutes les symétries essentielles"""
@@ -146,13 +162,14 @@ def do_all_symetries(grid: Grid) -> list[Grid]:
 
     add_grid(grid)
     tmp = grid
-    for _ in range(5):  
+    for _ in range(5):
         tmp = rotate_grid(tmp)
         add_grid(tmp)
         add_grid(invert_grid_h(tmp))
         add_grid(invert_grid_v(tmp))
     return all_grids
-        
+
+
 def get_state_negamax(grid: Grid) -> tuple:
-        """Renvoie un state hashable pour negamax"""
-        return tuple(sorted(grid.items()))
+    """Renvoie un state hashable pour negamax"""
+    return tuple(sorted(grid.items()))

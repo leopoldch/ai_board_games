@@ -10,38 +10,35 @@ Environment = Dict[str, Any]
 
 
 def initialize(
-    game: str, state: State, player: Player, hex_size: int, total_time: Time
+    game: str, _, player: Player, hex_size: int, total_time: Time
 ) -> Environment:
     """initialise l'environnement"""
-    print("Init")
     print(
-        f"{game} you play {player} on a grid of size {hex_size}. Time remaining: {total_time}"
+        f"{game} you play {player} on a grid of size {hex_size}."
     )
     if game == "gopher":
         env = initialize_gopher(player=player, hex_size=hex_size, total_time=total_time)
         return env
 
-    print('Dodo')
+    print("Dodo")
     env = initialize_dodo(player=player, hex_size=hex_size, total_time=total_time)
     return env
+
 
 def strategy_brain(
     env: Environment, state: State, player: Player, time_left: Time
 ) -> tuple[Environment, Action]:
     """fonction de stratégie"""
-    print(f"Temps restant : {time_left} secondes")
     if env["game"] == "gopher":
         values: tuple[Environment, Action] = strategy_gopher(
             env, state, player, time_left
         )
         return values
-
-    values: tuple[Environment, Action] = strategy_dodo(
-        env, state, player, time_left
-    )
+    values: tuple[Environment, Action] = strategy_dodo(env, state, player, time_left)
     return values
 
-def final_result(state: State, score: Score, player: Player):
+
+def final_result(_, score: Score, player: Player):
     """affichage du gagnant"""
     print(f"Ending: {player} wins with a score of {score}")
 
