@@ -405,7 +405,9 @@ class GopherGame:
     def __negamax_depth(self) -> int:
         """depth for negamax"""
         if self.__size <= 3: return 15
-        depths : dict[int,int] = {4:1000,5:10,6:9,7:7,8:5,9:4,10:3}
+        if self.__size == 6 and self.__played>30:
+            return 20    
+        depths : dict[int,int] = {4:1000,5:10,6:11,7:9,8:6,9:5,10:4}
         return depths.get(self.__size, 3) 
 
     @__negamax_memoize

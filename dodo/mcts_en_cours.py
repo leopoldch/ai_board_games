@@ -1,7 +1,7 @@
 from collections import deque
 from functools import lru_cache
 import numpy as np
-from utils import (
+from dodo.utils import (
     Cell,
     Player,
 )
@@ -74,7 +74,7 @@ class MonteCarloNode:
         """Check if node fully expanded"""
         return len(self.remaining_actions) == 0
 
-    def select_best_child(self, exploration_param=sqrt(2)):
+    def select_best_child(self, exploration_param=np.sqrt(2)+1):
         """Best child selection with UCT"""
         if not self.child_nodes:
             return None

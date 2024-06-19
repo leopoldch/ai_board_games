@@ -118,7 +118,6 @@ class MonteCarloNode:
         best_child = self.select_best_child()
         return best_child.action_from_parent if best_child else None
 
-
 def mcts(game):
     """stratégie MCTS"""
     legits = game.get_legits()

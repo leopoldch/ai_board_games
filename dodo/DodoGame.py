@@ -12,7 +12,7 @@ from dodo.utils import (
     Environment,
     get_state_negamax,
 )
-from dodo.mcts import mcts
+from dodo.mcts_en_cours import mcts
 
 class DodoGame:
     """classe du jeu dodo"""
@@ -449,31 +449,5 @@ class DodoGame:
         self.__verify_update()
 
 
-def test_mcts_win_rate(num_games: int, mcts_player: Player) -> float:
-    wins = 0
-    start_time = time.time()
-    for _ in range(num_games):
-        game = DodoGame(size=4, starting_player=1)
-        current_player = game.get_player()
 
-        while game.final():
-            if current_player == mcts_player:
-                action = game.strategy_mcts()
-                print(action)
-            else:
-                action = game.strategy_random()
-
-            game.make_move(action)
-            current_player = 3 - current_player
-
-        if game.score() == 1:
-            if game.get_player() == current_player:
-                wins += 1
-
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    win_rate = (wins / num_games) * 100
-    return win_rate, elapsed_time
-
-print(test_mcts_win_rate(50,1))
 
