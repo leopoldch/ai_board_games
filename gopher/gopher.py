@@ -205,6 +205,10 @@ class GopherGame:
             return 1
         return -1
 
+    def basic_evaluation(self) -> int:
+        self.__verify_update()
+        return len(self.__legits)
+    
     def final(self) -> bool:
         """returns if game has ended"""
         self.__verify_update()
@@ -217,7 +221,7 @@ class GopherGame:
     def __negamax_depth(self) -> int:
         """depth for negamax"""
         if self.__size <= 3:return 100000
-        depths: dict[int, int] = {4: 1000, 5: 10, 6: 8, 7: 9, 8: 6, 9: 5, 10: 4}
+        depths: dict[int, int] = {4: 1000, 5: 12, 6: 8, 7: 9, 8: 6, 9: 5, 10: 4}
         return depths.get(self.__size, 3)
 
     @staticmethod
@@ -288,6 +292,7 @@ class GopherGame:
 
         return max_eval
 
+
     def __negamax_action(self, depth: int = 3) -> tuple[float, Cell]:
         """returns negamax action with alpha-beta pruning"""
         best_move: tuple[int, int]
@@ -315,6 +320,14 @@ class GopherGame:
         """evaluate func for negamax"""
         return self.score() if self.__current_player == player else -self.score()
 
+    def __evaluate_negamax2(self, player: int) -> float:
+        """evaluate func for negamax"""
+        if self.__current_player == player:
+            return self.basic_evaluation() 
+        else:
+            return - self.basic_evaluation()
+
+
     # ---------------- DEFINITION DES STRATÉGIES ----------------
     # la stratégie utilisée pour jouer est negamax
     # les autres sont toutes moins efficaces
@@ -328,7 +341,7 @@ class GopherGame:
         if self.__firstmove and self.__size % 2 == 1:
             return (0, 0)
         if self.__firstmove and self.__size % 2 == 0:
-            return (1, self.__size - 1)
+            return (0, self.__size - 1)
         if (
             length > 1
             and self.__starting == self.__current_player
