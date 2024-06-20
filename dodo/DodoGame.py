@@ -1,5 +1,6 @@
 import random
 import math
+import numpy as np
 from dodo.utils import (
     Action,
     state_to_grid,
@@ -13,7 +14,7 @@ from dodo.utils import (
     get_state_negamax,
 )
 from collections import deque
-from dodo.mcts import mcts
+from dodo.test_mcts import mcts
 
 class DodoGame:
     """classe du jeu dodo"""
@@ -246,6 +247,38 @@ class DodoGame:
             )
 
             return -evaluation
+
+    def heuristic_evaluation(self, action: Action) -> int:
+        """Heuristic evaluation function for the game state."""
+        # Evaluate the game state after making the move
+        player = self.get_player()
+        opponent = 3 - player
+        #player_moves = len(self.get_legits())
+        self.make_move(action)
+        player_moves = len(self.get_legits())
+        positions_importantes = [(0, 0), (-1, 0), (0, -1), (1, 0), (0, 1), (1, 1), (-1, -1),
+                                 (-1, 1), (1, -1), (-2, 1), (1, -2), (2, -1), (-1, 2)]
+        center = 0
+        for cell, occupant in self.__grid.items():
+            if occupant == player:
+                if cell in positions_importantes:
+                    center += 1
+        race_turn = - self.race_turns_left(player)
+        #print("center", center)
+        #print("race_turn", race_turn)
+        #print("player_moves", player_moves)
+
+        self.set_player(opponent)
+        #opponent_moves = len(self.get_legits())
+        self.unmake_move(action)
+        self.set_player(3 - opponent)
+        if center != 0 and player_moves != 0:
+            return -np.log(player_moves) + 5 * race_turn + 5 * np.log(center)
+        return -player_moves + 5 * race_turn + center
+
+    def basic_evaluation(self) -> int:
+        self.__verify_update()
+        return len(self.__legits)
 
     def final(self) -> bool:
         """returns if game has ended"""

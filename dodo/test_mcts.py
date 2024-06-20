@@ -1,42 +1,7 @@
-    
-# A mettre dans dodo_game pour test
-def heuristic_evaluation(self, action: Action) -> int:
-        """Heuristic evaluation function for the game state."""
-        # Evaluate the game state after making the move
-        player = self.get_player()
-        opponent = 3 - player
-        #player_moves = len(self.get_legits())
-        self.make_move(action)
-        player_moves = len(self.get_legits())
-        positions_importantes = [(0, 0), (-1, 0), (0, -1), (1, 0), (0, 1), (1, 1), (-1, -1),
-                                 (-1, 1), (1, -1), (-2, 1), (1, -2), (2, -1), (-1, 2)]
-        center = 0
-        for cell, occupant in self.__grid.items():
-            if occupant == player:
-                if cell in positions_importantes:
-                    center += 1
-        race_turn = - self.race_turns_left(player)
-        #print("center", center)
-        #print("race_turn", race_turn)
-        #print("player_moves", player_moves)
-
-
-
-
-        self.set_player(opponent)
-        #opponent_moves = len(self.get_legits())
-        self.unmake_move(action)
-        self.set_player(3 - opponent)
-        if center != 0 and player_moves != 0:
-            return -np.log(player_moves) + 5 * race_turn + 5 * np.log(center)
-        return -player_moves + 5 * race_turn + center
-
-
 #MCTS avec tri par l'heuristique
 
-from functools import lru_cache
 import numpy as np
-from utils import (
+from dodo.utils import (
     Cell,
     Player,
 )
@@ -83,7 +48,6 @@ class MonteCarloNode:
         #nbr_visits: int = self.visits
         return game.heuristic_evaluation(action)
 
-    @lru_cache(maxsize=None)
     def rollout(self, game) -> int:
         """Perform a simulation from the current node using a heuristic"""
         move_stack: list = []
@@ -91,9 +55,7 @@ class MonteCarloNode:
             legal_actions = [action for action in game.get_legits() if game.is_legit(action)]
             if not legal_actions:
                 break
-            # Sort actions based on heuristic evaluation
             legal_actions.sort(key=lambda action: self.heuristic_evaluation(game, action), reverse=True)
-            # Choose the best action according to the heuristic evaluation
             action = legal_actions[0]
             move_stack.append(action)
             game.make_move(action)
@@ -102,8 +64,6 @@ class MonteCarloNode:
         while move_stack:
             game.unmake_move(move_stack.pop())
         return simulation_result
-
-
 
     def backpropagation(self, result: int):
         '''Backpropagate result with recursion'''
@@ -148,7 +108,7 @@ class MonteCarloNode:
             game.make_move(current_node.parent_action)
         return current_node, move_stack
 
-    def determine_best_action(self, game, num_simulations=100000):
+    def determine_best_action(self, game, num_simulations=1000000000):
         """Find the best action by running simulations"""
         for _ in range(num_simulations):
             selected_node, move_stack = self.select_simulation_node(game)

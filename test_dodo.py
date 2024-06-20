@@ -2,64 +2,48 @@ import time
 from dodo.DodoGame import DodoGame
 
 
-def test(iter: int, size: int):
-    """test function"""
+def test(iterations: int, size: int, starting) -> None:
+    """fonction de test"""
+    score: int = 0
     tps1 = time.time()
-    stats1 = 0
-    stats2 = 0
-    for _ in range(iter):
-        starting_player = 1
-        game = DodoGame(size, starting_player)
-
+    max_val = 0
+    for i in range(iterations):
+        tps2 = time.time()
+        game = DodoGame(size=size, starting_player=starting)
         while game.final():
+            #print(game)
             if game.get_player() == 1:
-                action = game.strategy_mcts()
+                play = game.strategy_mc()
+                game.make_move(play)
+                game.set_player(player=2)
             else:
-                action = game.strategy_random()
+                play = game.strategy_random()
+                game.make_move(play)
+                game.set_player(player=1)
+        # on compte le nombre de parties gagnées par le joueur 1
+        if game.get_player() == 1:
+            if game.score() == 1:
+                score += 1
+        else:
+            if game.score() == -1:
+                score += 1
+        temps2: float = time.time() - tps2
+        max_val = max(temps2,max_val)
+        del game
+        print(f"Avancement : {i}  winrate : {(score/(i+1))*100}")
 
-            game.make_move(action)
-            game.set_player(3 - game.get_player()) 
-
-        score = game.score()
-        if score == 1:
-            if game.get_player() == 1: 
-                stats1 += 1
-            else:
-                stats2 += 1
-
-    print(f"Temps d'exécution pour {iter} itérations : {time.time() - tps1:.4f} secondes")
-    print(f"Temps d'exécution pour une partie : {(time.time() - tps1)/iter:.4f} secondes")
-    print(f"Nombre de parties gagnées pour le joueur 1: {(stats1 / iter) * 100:.2f}%")
-    print(f"Nombre de parties gagnées pour le joueur 2: {(stats2 / iter) * 100:.2f}%")
-
-def test_mcts_win_rate(num_games: int, mcts_player) -> float:
-    wins = 0
-    start_time = time.time()
-    for _ in range(num_games):
-        game = DodoGame(size=4, starting_player=1)
-        current_player = game.get_player()
-
-        while game.final():
-            if current_player == mcts_player:
-                action = game.strategy_mc()
-            else:
-                action = game.strategy_random()
-
-            game.make_move(action)
-            current_player = 3 - current_player
-
-        if game.score() == 1:
-            if game.get_player() == current_player:
-                wins += 1
-
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    win_rate = (wins / num_games) * 100
-    print(f"win rate : {win_rate}%")
-    print(f"temps : {elapsed_time} ")
+    temps: float = time.time() - tps1
+    print()
+    print(
+        f"Nb itérations : {iterations} | taille : {size} | joueur départ : {starting}"
+    )
+    print(f"Temps d'éxécution  : {temps:.4f} secondes")
+    if iterations > 1:
+        print(f"Temps par partie  : {temps/iterations:.4f} secondes. Max : {max_val:.4f} secondes.")
+    print(f"Nb de win pour le joueur 1: {score} {(score/iterations)*100:.2f}%")
+    print(
+        f"Nb de win pour le joueur 2: {iterations-score} {((iterations-score)/iterations)*100:.2f}%"
+    )
 
 
-test_mcts_win_rate(100,1)
-
-
-#test(10, 4)
+test(10,4,1)

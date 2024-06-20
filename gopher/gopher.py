@@ -41,7 +41,7 @@ class GopherGame:
     # Pour contrer cette explosion algorithmique
     # il y a un élagage alpha beta, un cache qui enregistre les
     # grilles déjà explorées
-    # Les symétries ne sont pas efficaces
+    # Les symétries ne sont pas efficaces (trop couteux)
 
     # --- FONCTIONS UTILITAIRES POUR LE FONCTIONNEMENT DU JEU ---
 
@@ -58,6 +58,7 @@ class GopherGame:
         self.__played: list[Cell] = []
         self.__starting: Player = starting_player
         self.__negamax_cache: dict = {}
+        
 
     def __create_board(self) -> None:
         """create board using a size"""
@@ -215,13 +216,8 @@ class GopherGame:
 
     def __negamax_depth(self) -> int:
         """depth for negamax"""
-        length: int = len(self.__played)
         if self.__size <= 3:return 100000
-        if self.__size == 5 and length > 20:return 20
-        if self.__size == 6 and length > 25:return 15
-        if self.__size == 6 and length > 30:return 100
-        # aller au fond de l'arbre en fin de partie
-        depths: dict[int, int] = {4: 1000, 5: 12, 6: 12, 7: 9, 8: 6, 9: 5, 10: 4}
+        depths: dict[int, int] = {4: 1000, 5: 10, 6: 8, 7: 9, 8: 6, 9: 5, 10: 4}
         return depths.get(self.__size, 3)
 
     @staticmethod
@@ -230,6 +226,7 @@ class GopherGame:
 
         def memoized_func(self, depth: int, alpha: float, beta: float, player: int):
             """wrapped func"""
+            
             state = get_state_negamax(self.get_grid())
 
             if state in self.get_negamax_cache():
@@ -331,7 +328,7 @@ class GopherGame:
         if self.__firstmove and self.__size % 2 == 1:
             return (0, 0)
         if self.__firstmove and self.__size % 2 == 0:
-            return (0, self.__size - 1)
+            return (1, self.__size - 1)
         if (
             length > 1
             and self.__starting == self.__current_player
