@@ -17,7 +17,7 @@ import random
 import math
 from copy import deepcopy
 from utils.utilitary import (
-    Action,
+    ActionDodo,
     state_to_grid,
     str_blue,
     str_red,
@@ -232,7 +232,7 @@ class DodoGame:
             return True
         return False
 
-    def strategy_mc(self, nb_iterations: int = 1000) -> Action:
+    def strategy_mc(self, nb_iterations: int = 1000) -> ActionDodo:
         """Monte Carlo strategy"""
         self.__verify_update()
         if len(self.__legits) == 1:
@@ -362,7 +362,7 @@ class DodoGame:
 
         return max_eval
 
-    def __negamax_action(self, depth: int = 3) -> tuple[float, Action]:
+    def __negamax_action(self, depth: int = 3) -> tuple[float, ActionDodo]:
         """returns negamax action with alpha-beta pruning"""
         best_move: tuple[Cell, Cell]
         max_eval = float("-inf")
@@ -394,7 +394,7 @@ class DodoGame:
             return 100
         return -len(tmp)
 
-    def strategy_negamax(self) -> Action:
+    def strategy_negamax(self) -> ActionDodo:
         """negamax strat"""
         depth: int = self.__negamax_depth()
         tmp: int = self.__played

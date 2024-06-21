@@ -4,6 +4,7 @@ from dodo.dodo_game import DodoGame
 from utils.utilitary import (
     Environment,
     Action,
+    ActionDodo,
     Player,
     State,
     Time,
@@ -32,7 +33,7 @@ def strategy_dodo(
     starting_player: Player = env["starting"]
     game: DodoGame = DodoGame(size=size, starting_player=starting_player)
     game.restore_env(state, env, player)
-    action: Action = game.strategy_mc(8000)
+    action: ActionDodo = game.strategy_mc(8000)
     game.make_move(action)
     new_env: Environment = game.to_environnement()
     return (new_env, action)

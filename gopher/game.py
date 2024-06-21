@@ -4,6 +4,7 @@ from gopher.gopher_game import GopherGame
 from utils.utilitary import (
     Environment,
     Action,
+    ActionGopher,
     Player,
     State,
     Time,
@@ -32,7 +33,7 @@ def strategy_gopher(
     starting_player: Player = env["starting"]
     game: GopherGame = GopherGame(size=size, starting_player=starting_player)
     game.restore_env(state, env, player)
-    action: Action = game.strategy_negamax()
+    action: ActionGopher = game.strategy_negamax()
     # print(action)
     game.make_move(action)
     new_env: Environment = game.to_environnement()

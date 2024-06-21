@@ -16,6 +16,7 @@ import math
 import random
 from utils.utilitary import (
     Action,
+    ActionGopher,
     state_to_grid,
     str_blue,
     str_red,
@@ -334,7 +335,7 @@ class GopherGame:
     # la stratégie utilisée pour jouer est negamax
     # les autres sont toutes moins efficaces
 
-    def strategy_negamax(self) -> Action:
+    def strategy_negamax(self) -> ActionGopher:
         """Stratégie de jeu utilisant Négamax"""
         self.__verify_update()
         if len(self.__legits) == 1:
