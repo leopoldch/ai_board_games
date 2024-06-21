@@ -12,4 +12,4 @@ disable=
     E0611   # No name in module
 
 [REPORTS]
-reports=yes
+reports=no

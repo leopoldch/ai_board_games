@@ -1,17 +1,19 @@
+"""test du jeu dodo"""
+
 import time
-from dodo.DodoGame import DodoGame
+from dodo.dodo_game import DodoGame
 
 
 def test(iterations: int, size: int, starting) -> None:
     """fonction de test"""
     score: int = 0
     tps1 = time.time()
-    max_val = 0
+    max_val : float = 0
     for i in range(iterations):
         tps2 = time.time()
         game = DodoGame(size=size, starting_player=starting)
         while game.final():
-            #print(game)
+            # print(game)
             if game.get_player() == 1:
                 play = game.strategy_mc(7333)
                 game.make_move(play)
@@ -28,7 +30,7 @@ def test(iterations: int, size: int, starting) -> None:
             if game.score() == -1:
                 score += 1
         temps2: float = time.time() - tps2
-        max_val = max(temps2,max_val)
+        max_val = max(temps2, max_val)
         del game
         print(f"Avancement : {i}  winrate : {(score/(i+1))*100}")
 
@@ -39,11 +41,13 @@ def test(iterations: int, size: int, starting) -> None:
     )
     print(f"Temps d'éxécution  : {temps:.4f} secondes")
     if iterations > 1:
-        print(f"Temps par partie  : {temps/iterations:.4f} secondes. Max : {max_val:.4f} secondes.")
+        print(
+            f"Temps par partie  : {temps/iterations:.4f} secondes. Max : {max_val:.4f} secondes."
+        )
     print(f"Nb de win pour le joueur 1: {score} {(score/iterations)*100:.2f}%")
     print(
         f"Nb de win pour le joueur 2: {iterations-score} {((iterations-score)/iterations)*100:.2f}%"
     )
 
 
-test(10,4,1)
+test(10, 4, 1)

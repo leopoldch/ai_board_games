@@ -1,7 +1,7 @@
 """Fichier pour se connecter à la boucle de jeu et répondre"""
 
-from gopher.gopher import GopherGame
-from gopher.utils import (
+from gopher.gopher_game import GopherGame
+from utils.utilitary import (
     Environment,
     Action,
     Player,
