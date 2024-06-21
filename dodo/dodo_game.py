@@ -287,7 +287,7 @@ class DodoGame:
             if recompense > valeur_optimale:
                 valeur_optimale = recompense
                 action_optimale = action
-
+        print(f"Chance de win : {recompense:.4f}")
         return action_optimale
 
     @staticmethod
