@@ -2,10 +2,7 @@
 
 import time
 from gopher.gopher_game import GopherGame
-from utils.utilitary import (
-    Player,
-    Action
-)
+from utils.utilitary import Player, Action
 
 
 def test(iterations: int, size: int, starting: Player) -> None:
@@ -13,7 +10,7 @@ def test(iterations: int, size: int, starting: Player) -> None:
     score: int = 0
     tps1 = time.time()
     play: Action
-    max_val : float = 0
+    max_val: float = 0
     for i in range(iterations):
         tps2 = time.time()
         game = GopherGame(size=size, starting_player=starting)

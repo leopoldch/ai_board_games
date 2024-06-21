@@ -8,7 +8,7 @@ def test(iterations: int, size: int, starting) -> None:
     """fonction de test"""
     score: int = 0
     tps1 = time.time()
-    max_val : float = 0
+    max_val: float = 0
     for i in range(iterations):
         tps2 = time.time()
         game = DodoGame(size=size, starting_player=starting)

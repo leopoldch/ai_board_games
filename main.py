@@ -36,9 +36,7 @@ def strategy_brain(
     """fonction de stratégie"""
     values: tuple[Environment, Action]
     if env["game"] == "gopher":
-        values = strategy_gopher(
-            env, state, player, time_left
-        )
+        values = strategy_gopher(env, state, player, time_left)
         print("coup joué")
         return values
     values = strategy_dodo(env, state, player, time_left)
