@@ -363,7 +363,7 @@ class GopherGame:
         # print(f"cache : {len(self.__negamax_cache)}"if self.__negamax_cache else "no cache" )
         return value
 
-    def strategy_random(self) -> Action:
+    def strategy_random(self) -> ActionGopher:
         """function to play with a random strat"""
         self.__verify_update()
         if len(self.__legits) == 0:

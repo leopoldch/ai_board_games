@@ -4,7 +4,7 @@ import time
 from gopher.gopher_game import GopherGame
 from utils.utilitary import (
     Player,
-    Cell,
+    Action
 )
 
 
@@ -12,7 +12,7 @@ def test(iterations: int, size: int, starting: Player) -> None:
     """fonction de test"""
     score: int = 0
     tps1 = time.time()
-    play: Cell
+    play: Action
     max_val : float = 0
     for i in range(iterations):
         tps2 = time.time()
@@ -57,5 +57,5 @@ def test(iterations: int, size: int, starting: Player) -> None:
 
 
 if __name__ == "__main__":
-    test(iterations=100, size=6, starting=1)
+    test(iterations=100, size=4, starting=2)
     # utlimate_test(200,4,11)
