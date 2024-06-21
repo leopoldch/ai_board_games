@@ -219,13 +219,13 @@ class GopherGame:
         """depth for negamax"""
         if self.__size <= 3:
             return 100000
-        if self.__size == 6 and len(self.__played) > 31:
+        if self.__size == 6 and len(self.__played) > 11:
             if self.__neg_update:
                 print("updaté")
                 self.__negamax_cache = {}
                 self.__neg_update = False
-            return 1000
-        depths: dict[int, int] = {4: 1000, 5: 12, 6: 9, 7: 9, 8: 6, 9: 5, 10: 4}
+            return 9
+        depths: dict[int, int] = {4: 1000, 5: 12, 6: 7, 7: 7, 8: 6, 9: 5, 10: 4}
         return depths.get(self.__size, 3)
 
     @staticmethod

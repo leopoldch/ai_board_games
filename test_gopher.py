@@ -57,5 +57,5 @@ def test(iterations: int, size: int, starting: Player) -> None:
 
 
 if __name__ == "__main__":
-    test(iterations=100, size=4, starting=2)
+    test(iterations=100, size=6, starting=1)
     # utlimate_test(200,4,11)

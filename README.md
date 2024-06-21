@@ -16,6 +16,9 @@ Other implemented and tested algorithms:
 
 Depths are chosen automatically using another hashtable. After a certain amount of played moves, depth is set to 1000 in order to find a winning path.
 
+The winning strategy for player 1 on odd-numbered grids is implemented in O(1) time with a simple direction calculation
+The first moves for player 1 are fixed depending of the size. `(0,0)` or `(0,size-1)`
+
 ### Why did we choose Negamax?
 
 Negamax is a simplified version of Minimax where the same function is used for both players by inverting the score. 
