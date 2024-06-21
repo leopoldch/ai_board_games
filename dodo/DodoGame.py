@@ -1,6 +1,9 @@
+"""définition de la classe du jeu Dodo"""
+
+from collections import deque
 import random
 import math
-import numpy as np
+from copy import deepcopy
 from dodo.utils import (
     Action,
     state_to_grid,
@@ -13,8 +16,7 @@ from dodo.utils import (
     Environment,
     get_state_negamax,
 )
-from collections import deque
-from dodo.test_mcts import mcts
+
 
 class DodoGame:
     """classe du jeu dodo"""
@@ -35,19 +37,19 @@ class DodoGame:
 
     def copy(self):
         """constructeur de dodo"""
-        new_game = DodoGame(self.__size,self.__current_player)
-        new_game.__firstmove = self.__firstmove
-        new_game.__first_visit = self.__first_visit
-        new_game.__current_player = self.__current_player
-        new_game.__grid = self.__grid.copy()
-        new_game.__updated = self.__updated
-        new_game.__legits = self.__legits.copy()
-        new_game.__played = self.__played.copy()
-        new_game.__starting = self.__starting
+        new_game = DodoGame(self.__size, self.__current_player)
+        new_game.set_firstmove(self.get_firstmove())
+        new_game.set_first_visit(self.get_first_visit())
+        new_game.set_player(self.get_player())
+        new_game.set_grid(self.get_grid().copy())
+        new_game.set_updated(self.get_updated())
+        new_game.set_legits(self.get_legits().copy())
+        new_game.set_played(self.get_played().copy())
+        new_game.set_starting(self.get_starting())
         return new_game
 
     def __create_board(self) -> None:
-        """create board using a size"""
+        """cree la board en fonction de la size"""
         sizet = self.__size * 2 - 1
         counter: int = math.ceil(sizet / 2)
         start = [0, math.floor(sizet / 2)]
@@ -72,7 +74,6 @@ class DodoGame:
                 counter -= 1
                 start = [start[0], start[1] - 1]
 
-        """Checkers placement"""
         size = self.__size
         top = (0, size - 1)
         bot = (-(size - 1), 0)
@@ -98,7 +99,7 @@ class DodoGame:
             line_bot = (line_bot[0] + 1, line_bot[1] - 1)
 
     def __str__(self) -> str:
-        """Prints the board"""
+        """Affichage basique de la grille"""
         sizet: int = self.__size * 2 - 1
         returned_str: str = ""
         counter: int = math.ceil(sizet / 2)
@@ -149,7 +150,8 @@ class DodoGame:
         elif self.__current_player == 2:
             directions = [(-1, 0), (-1, -1), (0, -1)]
 
-        cellules_possibles = [(action[0][0] + direction[0], action[0][1] + direction[1]) for direction in directions]
+        cellules_possibles = [(action[0][0] + direction[0], action[0][1] + direction[1])
+                              for direction in directions]
         return action[1] in self.__grid and action[1] in cellules_possibles
 
     def __legit_moves(self) -> None:
@@ -176,7 +178,7 @@ class DodoGame:
             self.__firstmove = False
         start_cell, end_cell = action
         self.__grid[start_cell] = 0  # on enleve le pion de la position de départ
-        self.__grid[end_cell] = self.__current_player # on place le pion dans la position d'arrivée
+        self.__grid[end_cell] = self.__current_player  # on place le pion dans la position d'arrivée
         self.__updated = False
         self.__legits = []
         self.__played.append(action)
@@ -193,92 +195,10 @@ class DodoGame:
             self.__firstmove = True
 
     def score(self):
+        """return the score"""
         if len(self.__legits) == 0:
             return 1
-        else:
-            return -1
-
-    def race_turns_left(self, player: Player) -> float:
-        """
-        Calculate the minimum number of moves needed to reach the opponent's side of the board.
-        """
-        size = self.__size
-        player_positions = [pos for pos, occupant in self.__grid.items() if occupant == player]
-        length = len(player_positions)
-
-        race_turns = 0
-        for pos in player_positions:
-            distance = size - 1 - pos[0] if player == 1 else size - 1 + pos[0]
-            race_turns += distance
-
-        return race_turns / length
-
-    def evaluate2_board(self) -> float:
-        """Evaluate the board state for the current player."""
-        if len(self.__legits) == 0:
-            return 5000
-        else:
-            player = self.__current_player
-            opponent = 3 - player
-            center = 0
-
-            positions_importantes = [(0, 0), (-1, 0), (0, -1), (1, 0), (0, 1), (1, 1), (-1, -1),
-                                     (-1, 1), (1, -1), (-2, 1), (1, -2), (2, -1), (-1, 2)]
-
-            for cell, occupant in self.__grid.items():
-                if occupant == player:
-                    if cell in positions_importantes:
-                        center += 1
-                elif occupant == opponent:
-                    if cell in positions_importantes:
-                        center -= 1
-
-            player_legits = len(self.get_legits())
-            self.set_player(opponent)
-            opponent_legits = len(self.get_legits())
-            self.set_player(player)
-            diff_legits = opponent_legits - player_legits
-            race_turn = self.race_turns_left(opponent) - self.race_turns_left(player)
-
-            evaluation = (
-                    5 * center +
-                    5 * diff_legits +
-                    3 * race_turn
-            )
-
-            return -evaluation
-
-    def heuristic_evaluation(self, action: Action) -> int:
-        """Heuristic evaluation function for the game state."""
-        # Evaluate the game state after making the move
-        player = self.get_player()
-        opponent = 3 - player
-        #player_moves = len(self.get_legits())
-        self.make_move(action)
-        player_moves = len(self.get_legits())
-        positions_importantes = [(0, 0), (-1, 0), (0, -1), (1, 0), (0, 1), (1, 1), (-1, -1),
-                                 (-1, 1), (1, -1), (-2, 1), (1, -2), (2, -1), (-1, 2)]
-        center = 0
-        for cell, occupant in self.__grid.items():
-            if occupant == player:
-                if cell in positions_importantes:
-                    center += 1
-        race_turn = - self.race_turns_left(player)
-        #print("center", center)
-        #print("race_turn", race_turn)
-        #print("player_moves", player_moves)
-
-        self.set_player(opponent)
-        #opponent_moves = len(self.get_legits())
-        self.unmake_move(action)
-        self.set_player(3 - opponent)
-        if center != 0 and player_moves != 0:
-            return -np.log(player_moves) + 5 * race_turn + 5 * np.log(center)
-        return -player_moves + 5 * race_turn + center
-
-    def basic_evaluation(self) -> int:
-        self.__verify_update()
-        return len(self.__legits)
+        return -1
 
     def final(self) -> bool:
         """returns if game has ended"""
@@ -286,7 +206,7 @@ class DodoGame:
         if self.__legits:
             return True
         return False
-        
+
     def strategy_mc(self, nb_iterations: int = 1000) -> Action:
         """Monte Carlo strategy"""
         self.__verify_update()
@@ -296,62 +216,77 @@ class DodoGame:
         valeur_optimale: float = -float('inf')
         action_optimale: Action = None
 
-        for action in self.__legits:
-            recompense: float = 0.0
+        def simulate(action: Action) -> float:
             victoire_joueur1: int = 0
             victoire_joueur2: int = 0
+            total_simulations = nb_iterations // (len(self.__legits) + 1)
 
-            for _ in range(nb_iterations // (len(self.__legits) + 1)):
+            for _ in range(total_simulations):
+                game_copy = deepcopy(self)
                 pile = deque()
                 pile.append(action)
-                self.make_move(action)
-                self.set_player(3 - self.get_player())
+                game_copy.make_move(action)
+                game_copy.set_player(3 - game_copy.get_player())
 
-                while self.final():
-                    tmp_action: Action = self.strategy_random()
-                    if self.is_legit(tmp_action):
+                while game_copy.final():
+                    tmp_action: Action = game_copy.strategy_random()
+                    if game_copy.is_legit(tmp_action):
                         pile.append(tmp_action)
-                        self.make_move(tmp_action)
-                        self.set_player(3 - self.get_player())
+                        game_copy.make_move(tmp_action)
+                        game_copy.set_player(3 - game_copy.get_player())
 
-                if self.score() == 1:
-                    if self.get_player() == 1:
+                if game_copy.score() == 1:
+                    if game_copy.get_player() == 1:
                         victoire_joueur1 += 1
                     else:
                         victoire_joueur2 += 1
                 else:
-                    if self.get_player() == 2:
+                    if game_copy.get_player() == 2:
                         victoire_joueur1 += 1
                     else:
                         victoire_joueur2 += 1
 
                 while pile:
-                    self.unmake_move(pile.pop())
-                    self.set_player(3 - self.get_player())
+                    game_copy.unmake_move(pile.pop())
+                    game_copy.set_player(3 - game_copy.get_player())
 
-            if self.get_player() == 1:
-                recompense = victoire_joueur1 / nb_iterations
-            else:
-                recompense = victoire_joueur2 / nb_iterations
+            recompense = victoire_joueur1 / total_simulations if self.get_player() == 1 else victoire_joueur2 / total_simulations
+            return recompense
 
+        for action in self.__legits:
+            recompense = simulate(action)
             if recompense > valeur_optimale:
                 valeur_optimale = recompense
                 action_optimale = action
 
         return action_optimale
 
+    @staticmethod
     def __negamax_memoize(func):
         """Cache pour negamax"""
 
         def memoized_func(self, depth: int, alpha: float, beta: float, player: int):
             """wrapped func"""
-            self.__verify_update()
-            state = get_state_negamax(self.__grid)
 
-            if state in self.__negamax_cache:
-                cached_entry = self.__negamax_cache[state]
+            state = get_state_negamax(self.get_grid())
+
+            if state in self.get_negamax_cache():
+                cached_entry = self.get_negamax_cache()[state]
                 if cached_entry["depth"] >= depth:
-                    return cached_entry["value"]
+                    if cached_entry["flag"] == "exact":
+                        return cached_entry["value"]
+                    if (
+                            cached_entry["flag"] == "lowerbound"
+                            and cached_entry["value"] > alpha
+                    ):
+                        alpha = cached_entry["value"]
+                    if (
+                            cached_entry["flag"] == "upperbound"
+                            and cached_entry["value"] < beta
+                    ):
+                        beta = cached_entry["value"]
+                    if alpha >= beta:
+                        return cached_entry["value"]
 
             max_eval = func(self, depth, alpha, beta, player)
 
@@ -361,19 +296,17 @@ class DodoGame:
             elif max_eval >= beta:
                 flag = "lowerbound"
 
-            if state not in self.__negamax_cache or self.__negamax_cache[state]["depth"] < depth:
-                self.__negamax_cache[state] = {
-                    "value": max_eval,
-                    "depth": depth,
-                    "flag": flag
-                }
+            cache = self.get_negamax_cache()
+            if state not in cache or cache[state]["depth"] < depth:
+                self.set_negamax_cache(state, max_eval, depth, flag)
             return max_eval
 
         return memoized_func
 
     def __negamax_depth(self) -> int:
         """depth for negamax"""
-        if self.__size <= 3: return 12
+        if self.__size <= 3:
+            return 12
         depths: dict[int, int] = {4: 5, 5: 10, 6: 8, 7: 7, 8: 6, 9: 6, 10: 5}
         return depths.get(self.__size, 4)
 
@@ -423,19 +356,23 @@ class DodoGame:
 
     def __evaluate_negamax(self, player: int) -> float:
         """evaluate func for negamax"""
-        return self.evaluate2_board() if self.__current_player == player else -self.evaluate2_board()
+        tmp = self.get_legits()
+        if self.__current_player != player:
+            if not tmp:
+                return -100
+            return len(tmp)
+        else:
+            if not tmp:
+                return 100
+            return -len(tmp)
 
     def strategy_negamax(self) -> Action:
-        """Stratégie de jeu utilisant Négamax"""
+        """negamax strat"""
         depth: int = self.__negamax_depth()
         tmp: list[Cell] = self.__played.copy()
         value = self.__negamax_action(depth)[1]
         self.__played = tmp
         return value
-
-    def strategy_mcts(self) -> Action:
-        """Stratégie de jeu utilisant MCTS"""
-        return mcts(self.copy())
 
     def strategy_random(self) -> Action:
         """function to play with a random strat"""
@@ -464,6 +401,66 @@ class DodoGame:
         """retourne les coups joués"""
         return self.__played
 
+    def get_firstmove(self) -> bool:
+        """getter pour firstmove"""
+        return self.__firstmove
+
+    def get_updated(self) -> bool:
+        """getter pour updated"""
+        return self.__updated
+
+    def get_first_visit(self) -> bool:
+        """getter pour first_visit"""
+        return self.__first_visit
+
+    def get_grid(self):
+        """getter de grid"""
+        return self.__grid
+
+    def get_starting(self):
+        """getter de starting"""
+        return self.__starting
+
+    def get_negamax_cache(self):
+        """get negamax cache"""
+        return self.__negamax_cache
+
+    def set_negamax_cache(self, state, value, depth, flag):
+        """setter de cache"""
+        self.__negamax_cache[state] = {
+            "value": value,
+            "depth": depth,
+            "flag": flag,
+        }
+
+    def set_firstmove(self, firstmove: bool):
+        """Setter pour firstmove"""
+        self.__firstmove = firstmove
+
+    def set_first_visit(self, first_visit: bool):
+        """Setter pour first_visit"""
+        self.__first_visit = first_visit
+
+    def set_grid(self, grid: Grid):
+        """Setter pour grid"""
+        self.__grid = grid
+
+    def set_updated(self, updated: bool):
+        """Setter pour updated"""
+        self.__updated = updated
+
+    def set_legits(self, legits: list[tuple[Cell, Cell]]):
+        """Setter pour legits"""
+        self.__legits = legits
+
+    def set_played(self, played: list[tuple[Cell, Cell]]):
+        """Setter pour played"""
+        self.__played = played
+
+    def set_starting(self, starting: Player):
+        """Setter pour starting"""
+        self.__starting = starting
+
     def save_state(self) -> dict:
         """sauvegarde l'état du jeu"""
         # utilisée dans MCTS
@@ -481,7 +478,7 @@ class DodoGame:
         }
 
     def restore_state(self, state: dict) -> None:
-        """Permet de remettres des attributs utile dans MCTS"""
+        """Permet de remettres des attributs utile"""
         self.__grid = state["grid"]
         self.__current_player = state["current_player"]
         self.__firstmove = state["firstmove"]
@@ -534,7 +531,3 @@ class DodoGame:
             elif len(self.__played) == 0:
                 self.__starting = current
         self.__verify_update()
-
-
-
-

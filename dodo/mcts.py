@@ -1,3 +1,13 @@
+"""MCTS pour dodo"""
+'''
+
+
+Implémentation de MCTS
+Nous n'avons pas utilisé l'algo pour la suite du projet
+
+
+
+
 from collections import deque
 from functools import lru_cache
 import numpy as np
@@ -9,7 +19,8 @@ from dodo.utils import (
 class MonteCarloNode:
     """Node for Monte Carlo Tree Search"""
 
-    def __init__(self, available_actions: list[tuple[Cell, Cell]], player: Player, parent_node=None, parent_action=None):
+    def __init__(self, available_actions: list[tuple[Cell, Cell]], player: Player, parent_node=None,
+                 parent_action=None):
         self.current_player: Player = player
         self.parent_node: MonteCarloNode = parent_node
         self.parent_action: tuple[Cell, Cell] = parent_action
@@ -34,7 +45,8 @@ class MonteCarloNode:
             if game.is_legit(action):
                 game.make_move(action)
                 next_actions: list[tuple[Cell, Cell]] = game.get_legits()
-                new_child_node = MonteCarloNode(next_actions, 3 - self.current_player, parent_node=self, parent_action=action)
+                new_child_node = MonteCarloNode(next_actions, 3 - self.current_player,
+                                                parent_node=self, parent_action=action)
                 game.unmake_move(action)
                 self.child_nodes.append(new_child_node)
                 return new_child_node
@@ -61,7 +73,7 @@ class MonteCarloNode:
         return rollout_result
 
     def backpropagation(self, result: int):
-        '''backpropagate result with recursion'''
+        """backpropagate result with recursion"""
         self.visits += 1
         if self.current_player == 1:
             self.results += 1 if result == 1 else -1
@@ -79,7 +91,8 @@ class MonteCarloNode:
         if not self.child_nodes:
             return None
         uct_scores = [
-            (child.get_results() / child.get_visits()) + exploration_param * np.sqrt((np.log(self.get_visits()) / child.get_visits()))
+            (child.get_results() / child.get_visits()) + exploration_param *
+            np.sqrt((np.log(self.get_visits()) / child.get_visits()))
             for child in self.child_nodes if child.get_visits() > 0
         ]
         if not uct_scores:
@@ -125,3 +138,6 @@ def mcts(game):
     if optimal_action is None:
         raise ValueError("No valid actions found during MCTS")
     return optimal_action
+
+
+'''

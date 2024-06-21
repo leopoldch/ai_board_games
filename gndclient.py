@@ -8,7 +8,7 @@
 #######################################################################
 #######################################################################
 
-VERSION = "gamma"
+VERSION = "1.0.1"
 
 import time
 import ast
@@ -290,6 +290,7 @@ def start(
             env = newenv
         except IllegalActionException:
             print("Illegal action!")
-
+    if gui:
+        print(grid_state(game_info.state, game_info.grid_size))
     # Call of final callback to give results
     end(game_info.state, finish_info.final_score, finish_info.winner)

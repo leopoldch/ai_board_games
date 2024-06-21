@@ -13,7 +13,7 @@ def test(iterations: int, size: int, starting) -> None:
         while game.final():
             #print(game)
             if game.get_player() == 1:
-                play = game.strategy_ucb1(1300)
+                play = game.strategy_mc(7333)
                 game.make_move(play)
                 game.set_player(player=2)
             else:
@@ -46,4 +46,4 @@ def test(iterations: int, size: int, starting) -> None:
     )
 
 
-test(100,4,1)
+test(10,4,1)

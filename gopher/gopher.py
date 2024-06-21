@@ -58,6 +58,7 @@ class GopherGame:
         self.__played: list[Cell] = []
         self.__starting: Player = starting_player
         self.__negamax_cache: dict = {}
+        self.__neg_update = True
         
 
     def __create_board(self) -> None:
@@ -204,10 +205,6 @@ class GopherGame:
         if self.__legits:
             return 1
         return -1
-
-    def basic_evaluation(self) -> int:
-        self.__verify_update()
-        return len(self.__legits)
     
     def final(self) -> bool:
         """returns if game has ended"""
@@ -221,7 +218,13 @@ class GopherGame:
     def __negamax_depth(self) -> int:
         """depth for negamax"""
         if self.__size <= 3:return 100000
-        depths: dict[int, int] = {4: 1000, 5: 12, 6: 8, 7: 9, 8: 6, 9: 5, 10: 4}
+        if self.__size == 6 and len(self.__played)>31:
+            if self.__neg_update:
+                print('updaté')
+                self.__negamax_cache = {}
+                self.__neg_update = False
+            return 1000
+        depths: dict[int, int] = {4: 1000, 5: 12, 6: 9, 7: 9, 8: 6, 9: 5, 10: 4}
         return depths.get(self.__size, 3)
 
     @staticmethod
@@ -292,7 +295,6 @@ class GopherGame:
 
         return max_eval
 
-
     def __negamax_action(self, depth: int = 3) -> tuple[float, Cell]:
         """returns negamax action with alpha-beta pruning"""
         best_move: tuple[int, int]
@@ -318,14 +320,16 @@ class GopherGame:
 
     def __evaluate_negamax(self, player: int) -> float:
         """evaluate func for negamax"""
-        return self.score() if self.__current_player == player else -self.score()
-
-    def __evaluate_negamax2(self, player: int) -> float:
-        """evaluate func for negamax"""
-        if self.__current_player == player:
-            return self.basic_evaluation() 
+        tmp = self.get_legits()
+        if self.__current_player != player:
+            if not tmp:
+                return 100
+            return -len(tmp)
         else:
-            return - self.basic_evaluation()
+            if not tmp:
+                return -100
+            return len(tmp)
+        #return self.score() if self.__current_player == player else -self.score()
 
 
     # ---------------- DEFINITION DES STRATÉGIES ----------------
@@ -457,6 +461,7 @@ class GopherGame:
         self.__updated = state["updated"]
         self.__first_visit = state["first_visit"]
         self.__negamax_cache = state["negamax_cache"]
+        self.__neg_update = state["neg_update"]
 
     def to_environnement(self) -> dict:
         """sauvegarde de l'environnement"""
@@ -472,6 +477,7 @@ class GopherGame:
             "game": "gopher",
             "first_visit": self.__first_visit,
             "negamax_cache": self.__negamax_cache,
+            "neg_update" : self.__neg_update,
         }
 
     def restore_env(self, state: State, env: Environment, current: Player) -> None:

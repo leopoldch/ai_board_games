@@ -1,6 +1,6 @@
 """Fichier pour se connecter à la boucle de jeu et répondre"""
 
-from dodo.DodoGame import DodoGame
+from dodo.tmp_DodoGame import DodoGame
 from typing import Union
 from dodo.utils import (
     Environment,
@@ -31,7 +31,7 @@ def strategy_dodo(
     starting_player: Player = env["starting"]
     game: DodoGame = DodoGame(size=size, starting_player=starting_player)
     game.restore_env(state, env, player)
-    action: Action = game.strategy_mc()
+    action: Action = game.strategy_mc(8000)
     # print(action)
     game.make_move(action)
     new_env: Environment = game.to_environnement()
