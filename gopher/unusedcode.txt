@@ -1,43 +1,6 @@
 """ 
-    pas utilisé pour Negamax 
+    pas utilisé pour Gopher  
     
-    def __evaluate(self, _) -> float:
-        '''Evaluate the potential of a move.'''
-        score = 0
-        self.__legit_moves()
-        if len(self.get_legits()) == 0:
-            score = 100
-        elif len(self.get_legits()) == 1:
-            score = 50
-        else:
-            future_moves = len(self.get_legits())
-            if future_moves > 3:
-                score += 1
-            elif future_moves == 3:
-                score += 2
-            else:
-                score += 3
-        return -score
-
-    def __evaluate_move(self, cell : Cell) -> float:
-        '''Evaluate the potential of a move v2'''
-        self.make_move(cell)
-        score = 0
-        self.__legit_moves()
-        if len(self.get_legits()) == 0:
-            score = 100
-        elif len(self.get_legits()) == 1:
-            score = 50
-        else:
-            future_moves = len(self.get_legits())
-            if future_moves > 3:
-                score += 1
-            elif future_moves == 3:
-                score += 2
-            else:
-                score += 3
-        self.__unmake_move(cell)
-        return score
 """
 """ Les algos ci-dessous ne sont pas utilisés
 
