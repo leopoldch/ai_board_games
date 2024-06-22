@@ -3,15 +3,14 @@
 
 This project involved modeling two board games, `Dodo` and `Gopher`, designed by Mark Steere, and creating a program capable of playing them intelligently.
 
-> Pylint scores are somewhat inaccurate due to module imports. To avoid getting import errors I disabled them in `.pylintrc`
+> Pylint scores are somewhat inaccurate due to module imports. To avoid getting import errors we disabled them in `.pylintrc`
 
 ## Introduction 
 
 The major issue we had to solve was to ajust our programs to be efficient enough in a reasonable time.
-- Reducing algorithm complexity
+- Reducing algorithm complexity (using python librairies when possible)
 - Find the actual best action 
 - Don't exceed the time limit 
-
 
 > To test our programs we hosted the gnd server on a personnal virtual machine. This way 2 players could connect and play. 
 
@@ -22,11 +21,12 @@ The chosen algorithm for playing was Negamax (a variant of Minimax).
 Other implemented and tested algorithms:
 - Minimax
 - Alpha-Beta
-- Monte Carlo Tree Search
+- MCTS
 
 We added an alpha-beta pruning to reduce the time of the calculation and a cache to avoid re calculate a second time the evaluation of the grid. 
 
-Depths are chosen automatically using another hashtable. After a certain amount of played moves, depth is increased in order to find a winning path.
+Depths are chosen automatically using another hashtable, that way depth is easily adaptable. After a certain amount of played moves, depth is increased in order to find a winning path.
+Disadvantage : it is really hard to find out when to switch to a deeper value, game length can be very variable and if we switch too early our program will time out.
 
 ```
 def __negamax_depth(self) -> int:
@@ -43,7 +43,7 @@ def __negamax_depth(self) -> int:
     return depths.get(self.__size, 3)
 ```
 
-Disadvantages : The calculation takes a lot of time to process and might time out in 150s. 
+Disadvantages : With these depths the calculation takes a lot of time to process and might time out in 150s. 
 
 The winning strategy for player 1 on odd-numbered grids is implemented in O(1) time with a simple direction calculation
 ```
@@ -118,6 +118,8 @@ To changes the strategy you can edit the following line in `./dodo/game.py` :
 - ```action: ActionDodo = game.strategy_mc(8000)```
 - ```action: ActionDodo = game.strategy_negamax()```
 
+> Iteration is fixed in `./dodo/game.py`, it is not stored in a hashtable and adjusted depending on the grid size ! 
+
 ## Generic Files 
 - `./main.py`: connect to server to play
 - `./utils/gndclient.py`: client which allows us to connect to a server
@@ -135,6 +137,25 @@ To run our project, you need to:
   - `parser.add_argument("-s", "--server-url", default="http://server.url")`
 
 To test locally, there is another file named `test_gopher.py` (resp `test_dodo.py`) that you can use.
+
+### Thoughts and feelings about the project
+
+This project was very instructive and fun, we competed to find the best solution. 
+The competition made us really implicated in this project and we took it very serious. 
+We tried to go beyond the course to find other algorithms. 
+It was really good fun to test our algorithms playing against friends.
+
+We also thought about training a model using pytorch however :
+- the model would have been trained upon an unique grid size at a time
+- the model would have taken some time to learn how to play
+- the model would have been efficient playing to random actions but maybe not to real players
+
+An efficient way to do it would have been to train a model to search for the best move to explore first inside an MC or MCTS algorithm.
+
+These algorithms work pretty good. During the tournament, We lost to one person on Gopher (warmup) and timed out once wich feels very frustrating. On Dodo We didn't lose except to one person (which we played against twice unfortunately...).
+
+As a conclusion, we are pretty proud of our work, and we learnt a lot about game solving algorithms. 
+
 
 <br/><br/><br/>
 > Credits: `leopold.chappuis@etu.utc.fr` `aissa.kadri@etu.utc.fr`
