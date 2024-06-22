@@ -2,11 +2,12 @@
     pas utilisé pour Gopher  
     
 """
-""" Les algos ci-dessous ne sont pas utilisés
+""" 
+    Les algos ci-dessous ne sont pas utilisés et n'ont pas été mis à jour depuis longtemps
 
     # ----------------------- ALGO MIN-MAX -----------------------
 
-    # @memoize ralenti
+    # @memoize ralenti le programme
     def __minmax_action(self, depth: int = 0) -> tuple[float, Action]:
         '''Minimax func.'''
         best: tuple[float, Action]

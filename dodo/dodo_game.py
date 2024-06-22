@@ -305,12 +305,12 @@ class DodoGame:
                     if cached_entry["flag"] == "exact":
                         return cached_entry["value"]
                     if (
-                        cached_entry["flag"] == "lowerbound"
+                        cached_entry["flag"] == "borninf"
                         and cached_entry["value"] > alpha
                     ):
                         alpha = cached_entry["value"]
                     if (
-                        cached_entry["flag"] == "upperbound"
+                        cached_entry["flag"] == "bornsup"
                         and cached_entry["value"] < beta
                     ):
                         beta = cached_entry["value"]
@@ -321,9 +321,9 @@ class DodoGame:
 
             flag = "exact"
             if max_eval <= alpha:
-                flag = "upperbound"
+                flag = "bornsup"
             elif max_eval >= beta:
-                flag = "lowerbound"
+                flag = "borninf"
 
             cache = self.get_negamax_cache()
             if state not in cache or cache[state]["depth"] < depth:
@@ -363,7 +363,7 @@ class DodoGame:
         return max_eval
 
     def __negamax_action(self, depth: int = 3) -> tuple[float, ActionDodo]:
-        """returns negamax action with alpha-beta pruning"""
+        """retourne negamax action with alpha-beta pruning"""
         best_move: tuple[Cell, Cell]
         max_eval = float("-inf")
         alpha = float("-inf")
