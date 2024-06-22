@@ -219,7 +219,7 @@ class GopherGame:
         """depth for negamax"""
         if self.__size <= 3:
             return 100000
-        if self.__size == 6 and len(self.__played) > 11:
+        if self.__size == 6 and len(self.__played) > 25:
             if self.__neg_update:
                 print("updaté")
                 self.__negamax_cache = {}
